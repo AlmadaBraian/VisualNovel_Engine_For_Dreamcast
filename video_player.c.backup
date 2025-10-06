@@ -1,0 +1,142 @@
+#include "video_player.h"
+#include "audio.h"
+#include <stdio.h>
+#include <string.h>
+#include <png/png.h>
+
+// --- carga PNG en textura ---
+static pvr_ptr_t load_png_to_pvr(const char *filename, uint32 *w, uint32 *h)
+{
+    kos_img_t img;
+    if (png_to_img(filename, PNG_FULL_ALPHA, &img) < 0)
+    {
+        printf("Error cargando PNG: %s\n", filename);
+        return NULL;
+    }
+    *w = img.w;
+    *h = img.h;
+
+    pvr_ptr_t tex = pvr_mem_malloc(img.w * img.h * 2);
+    if (tex)
+        pvr_txr_load(img.data, tex, img.w * img.h * 2);
+    free(img.data);
+    return tex;
+}
+
+static void load_frame(VideoPlayer *vp, int frame)
+{
+    if (vp->current.tex)
+    {
+        pvr_mem_free(vp->current.tex);
+        vp->current.tex = NULL;
+    }
+
+    char filename[MAX_PATH_LEN];
+    snprintf(filename, sizeof(filename), "%s/frame%04d.png", vp->path, frame);
+    vp->current.tex = load_png_to_pvr(filename, &vp->current.w, &vp->current.h);
+}
+
+// --- init ---
+void video_init(VideoPlayer *vp, const char *path, int frame_count, int fps, const char *audio_file)
+{
+    vp->frame_count = frame_count;
+    vp->current_frame = 0;
+    vp->fps = fps;
+    vp->frame_duration_ms = 1000 / fps;
+    vp->elapsed_ms = 0;
+    vp->finished = 0;
+
+    strncpy(vp->path, path, sizeof(vp->path) - 1);
+    vp->path[sizeof(vp->path) - 1] = '\0';
+
+    vp->current.tex = NULL;
+    vp->current.w = 0;
+    vp->current.h = 0;
+
+    load_frame(vp, 0);
+
+    if (audio_file)
+        audio_play_music(audio_file, 0);
+}
+
+// --- update ---
+void video_update(VideoPlayer *vp, int delta_ms)
+{
+    if (vp->finished)
+        return;
+
+    vp->elapsed_ms += delta_ms;
+    while (vp->elapsed_ms >= vp->frame_duration_ms)
+    {
+        vp->elapsed_ms -= vp->frame_duration_ms;
+        vp->current_frame++;
+
+        if (vp->current_frame >= vp->frame_count)
+        {
+            vp->finished = 1;
+            return;
+        }
+
+        load_frame(vp, vp->current_frame);
+    }
+}
+
+// --- draw ---
+void video_draw(VideoPlayer *vp)
+{
+    if (vp->finished || !vp->current.tex)
+        return;
+
+    pvr_poly_cxt_t cxt;
+    pvr_poly_hdr_t hdr;
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY,
+                     PVR_TXRFMT_ARGB4444 | PVR_TXRFMT_NONTWIDDLED,
+                     vp->current.w, vp->current.h, vp->current.tex,
+                     PVR_FILTER_BILINEAR);
+    pvr_poly_compile(&hdr, &cxt);
+
+    pvr_prim(&hdr, sizeof(hdr));
+
+    pvr_vertex_t v[4];
+    v[0].x = 0;
+    v[0].y = 0;
+    v[0].z = 1;
+    v[0].u = 0;
+    v[0].v = 0;
+    v[0].argb = 0xFFFFFFFF;
+    v[0].flags = PVR_CMD_VERTEX;
+    v[1].x = 640;
+    v[1].y = 0;
+    v[1].z = 1;
+    v[1].u = 1;
+    v[1].v = 0;
+    v[1].argb = 0xFFFFFFFF;
+    v[1].flags = PVR_CMD_VERTEX;
+    v[2].x = 0;
+    v[2].y = 480;
+    v[2].z = 1;
+    v[2].u = 0;
+    v[2].v = 1;
+    v[2].argb = 0xFFFFFFFF;
+    v[2].flags = PVR_CMD_VERTEX;
+    v[3].x = 640;
+    v[3].y = 480;
+    v[3].z = 1;
+    v[3].u = 1;
+    v[3].v = 1;
+    v[3].argb = 0xFFFFFFFF;
+    v[3].flags = PVR_CMD_VERTEX_EOL;
+
+    for (int i = 0; i < 4; i++)
+        pvr_prim(&v[i], sizeof(pvr_vertex_t));
+}
+
+// --- shutdown ---
+void video_shutdown(VideoPlayer *vp)
+{
+    if (vp->current.tex)
+    {
+        pvr_mem_free(vp->current.tex);
+        vp->current.tex = NULL;
+    }
+}

@@ -1,0 +1,8 @@
+#ifndef WFONT_METRICS_H
+#define WFONT_METRICS_H
+
+#define WFONT_CELL_WIDTH 32
+#define WFONT_CELL_HEIGHT 39
+#define WFONT_BASELINE 28
+
+#endif

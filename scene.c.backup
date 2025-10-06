@@ -1,0 +1,196 @@
+#include "scene.h"
+#include "font.h"
+#include "cJSON.h"
+#include "sprite.h"
+
+const char* trim_line(const char* s) {
+    // Saltar BOM si existe
+    if((unsigned char)s[0]==0xEF && (unsigned char)s[1]==0xBB && (unsigned char)s[2]==0xBF)
+        s += 3;
+
+    // Saltar todos los caracteres <= 0x20 (espacio, tab, \n, \r, etc.)
+    while(*s && (unsigned char)*s <= 0x20)
+        s++;
+
+    return s;
+}
+void load_scene_from_json(Scene *scene, const char *filename) {
+    FILE *f = fopen(filename, "r");
+    if(!f) {
+        printf("No pude abrir %s\n", filename);
+        return;
+    }
+
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    rewind(f);
+
+    char *json_data = malloc(size + 1);
+    if(!json_data) {
+        fclose(f);
+        return;
+    }
+
+    fread(json_data, 1, size, f);
+    json_data[size] = '\0';
+    fclose(f);
+
+    cJSON *root = cJSON_Parse(json_data);
+    if(!root) {
+        printf("Error parseando JSON: %s\n", cJSON_GetErrorPtr());
+        free(json_data);
+        return;
+    }
+
+    // --- Fondo ---
+    cJSON *bg = cJSON_GetObjectItem(root, "background");
+    if(cJSON_IsString(bg)) {
+        uint32 tex_w, tex_h;
+        scene->bg_tex = load_png_texture(bg->valuestring, &scene->bg_w, &scene->bg_h, &tex_w, &tex_h);
+    }
+
+    // --- Sprites ---
+    cJSON *sprites = cJSON_GetObjectItem(root, "sprites");
+    if(cJSON_IsArray(sprites)) {
+        int count = cJSON_GetArraySize(sprites);
+        scene->sprite_count = 0;
+        for(int i=0; i<count; i++) {
+            cJSON *spr = cJSON_GetArrayItem(sprites, i);
+            const char *tex_path = cJSON_GetObjectItem(spr, "texture")->valuestring;
+            uint32 tex_w, tex_h;
+            pvr_ptr_t tex = load_png_texture(tex_path, &tex_w, &tex_h, &tex_w, &tex_h);
+
+            float x = cJSON_GetObjectItem(spr, "x")->valuedouble;
+            float y = cJSON_GetObjectItem(spr, "y")->valuedouble;
+            float w = cJSON_GetObjectItem(spr, "width")->valuedouble;
+            float h = cJSON_GetObjectItem(spr, "height")->valuedouble;
+
+            scene_add_sprite(scene, tex, x, y, w, h, tex_w, tex_h);
+        }
+    }
+
+    // --- Líneas ---
+	// Puntero de escritura dentro del buffer
+	char *buf_ptr = scene->line_buffer;
+    cJSON *lines = cJSON_GetObjectItem(root, "lines");
+    if(cJSON_IsArray(lines)) {
+        int count = cJSON_GetArraySize(lines);
+        scene->line_count = 0;
+        for(int i=0; i<count; i++) {
+            cJSON *ln = cJSON_GetArrayItem(lines, i);
+            if(cJSON_IsString(ln)) {
+                const char *txt = ln->valuestring;
+
+                // --- Saltar BOM si existe ---
+                if ((unsigned char)txt[0] == 0xEF &&
+                    (unsigned char)txt[1] == 0xBB &&
+                    (unsigned char)txt[2] == 0xBF) {
+                    txt += 3;
+                }
+
+            // Copiar línea al buffer grande
+            size_t len = strlen(txt);
+            if(len >= MAX_LINE_LEN) len = MAX_LINE_LEN - 1;
+            memcpy(buf_ptr, txt, len);
+            buf_ptr[len] = '\0';
+
+            // Guardar puntero en el arreglo de líneas
+            scene->lines[scene->line_count++] = buf_ptr;
+
+            // Avanzar el puntero para la siguiente línea
+            buf_ptr += MAX_LINE_LEN;
+            }
+        }
+    }
+
+    cJSON_Delete(root);
+    free(json_data);
+}
+
+
+Scene scenes[MAX_SCENES];
+int current_scene = 0;
+int scene_count = 0;
+
+// --- Escenario ---
+Block textBox = { 0.0f, 300.0f, 640.0f, 200.0f };
+
+static inline int min(int a, int b) {
+    return (a < b) ? a : b;
+}
+
+void scene_init(Scene *scene) {
+    scene->bg_tex = NULL;
+    scene->bg_w = scene->bg_h = 0;
+    scene->sprite_count = 0;
+    scene->line_count = 0;
+    scene->current_line = 0;
+    scene->chars_displayed = 0;
+}
+
+void scene_add_sprite(Scene *scene, pvr_ptr_t tex, float x, float y, float w, float h,
+                      uint32 tex_w, uint32 tex_h) {
+    if(scene->sprite_count >= 16) return;
+    Sprite *s = &scene->sprites[scene->sprite_count++];
+    s->tex = tex;
+    s->x = x; s->y = y;
+    s->width = w; s->height = h;
+    s->tex_w = tex_w; s->tex_h = tex_h;
+}
+
+void scene_add_line(Scene *scene, const char *line) {
+    if(scene->line_count >= MAX_LINES) return;
+
+    // Copiar la línea a memoria propia
+    char *copy = malloc(strlen(line) + 1);
+    if(!copy) return;
+    strcpy(copy, line);
+
+    scene->lines[scene->line_count++] = copy;
+}
+
+void scene_next_line(Scene *scene) {
+    if(scene->current_line < scene->line_count - 1) {
+        scene->current_line++;
+        scene->chars_displayed = 0;  // reinicia efecto máquina de escribir
+    }
+}
+
+void scene_render(Scene *scene) {
+    // --- Fondo ---
+    pvr_list_begin(PVR_LIST_OP_POLY);
+    if(scene->bg_tex){
+        draw_sprite(0, 0, scene->bg_w, scene->bg_h,
+                    scene->bg_w, scene->bg_h,
+                    next_pow2(scene->bg_w), next_pow2(scene->bg_h),
+                    scene->bg_tex, PVR_LIST_OP_POLY);
+    }
+    pvr_list_finish();
+
+    // --- Sprites ---
+    pvr_list_begin(PVR_LIST_TR_POLY);
+    for(int i=0; i<scene->sprite_count; i++) {
+        Sprite *s = &scene->sprites[i];
+        draw_sprite(s->x, s->y, s->width, s->height,
+                    s->tex_w, s->tex_h,
+                    next_pow2(s->tex_w), next_pow2(s->tex_h),
+                    s->tex, PVR_LIST_TR_POLY);
+    }
+
+    // --- Caja de texto y línea actual ---
+    draw_block(&textBox, 0x80000000);
+
+    if(scene->line_count > 0) {
+        const char *line = scene->lines[scene->current_line];
+        char buf[256];
+        int len = min(scene->chars_displayed, strlen(line));
+        if(len > sizeof(buf)-1) len = sizeof(buf)-1;
+        memcpy(buf, line, len);
+        buf[len] = '\0';
+
+        // Dibujar texto de la línea actual
+        draw_string(20, 310, buf, MAX_CHARS);
+    }
+
+    pvr_list_finish();
+}

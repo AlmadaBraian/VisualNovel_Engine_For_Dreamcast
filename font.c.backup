@@ -1,0 +1,165 @@
+// font.c
+#include <kos.h>
+#include <stdlib.h>
+#include "wfont.h"
+
+pvr_ptr_t font_tex;   // textura PVR de la fuente
+float text_scale = 2.0f; // escala global para draw_string
+
+// --- Funciones auxiliares ---
+static inline uint32 next_pow2(uint32 x) {
+    uint32 r = 1;
+    while(r < x) r <<= 1;
+    return r;
+}
+
+// UTF-8 simple (ASCII + 2 bytes)
+int utf8_next(const char *s, unsigned char *out) {
+    unsigned char c = (unsigned char)s[0];
+    if(c < 0x80) { *out = c; return 1; }
+    if((c & 0xE0) == 0xC0) {
+        unsigned char c2 = (unsigned char)s[1];
+        *out = ((c & 0x1F) << 6) | (c2 & 0x3F);
+        return 2;
+    }
+    *out = '?';
+    return 1;
+}
+
+// ASCII: 0-127 se pasa directo
+// Ñ y acentos: índices de tu wfont
+unsigned char utf8_to_font_index(const char **p) {
+    unsigned char c = (unsigned char)**p;
+
+    // salto de línea
+    if(c == '\n') { (*p)++; return '\n'; }
+
+    // ASCII normal
+    if(c < 0x80) { (*p)++; return c; }
+
+    // UTF-8 de 2 bytes (acentos y ñ)
+    unsigned char c2 = (unsigned char)*(*p + 1);
+    if(c == 0xC3) {
+        (*p) += 2;
+        switch(c2) {
+            case 0xB1: return 164; // ñ
+            case 0xA1: return 160; // á
+            case 0xA9: return 130; // é
+            case 0xAD: return 161; // í
+            case 0xB3: return 162; // ó
+            case 0xBA: return 163; // ú
+            default: return '?';
+        }
+    }
+
+    // cualquier otro byte desconocido
+    (*p)++; 
+    return '?';
+}
+
+
+
+// --- Inicializar fuente ---
+void font_init(void) {
+    int x, y, i, c = 0;
+    static unsigned short temp_tex[256*256];
+
+    font_tex = pvr_mem_malloc(256*256*2); // 16bpp
+
+    for(y=0; y<128; y+=16)
+        for(x=0; x<256; x+=8) {
+            for(i=0; i<16; i++) {
+                temp_tex[x + (y+i)*256 + 0] = 0xFFFF*((wfont[c+i]&0x80)>>7);
+                temp_tex[x + (y+i)*256 + 1] = 0xFFFF*((wfont[c+i]&0x40)>>6);
+                temp_tex[x + (y+i)*256 + 2] = 0xFFFF*((wfont[c+i]&0x20)>>5);
+                temp_tex[x + (y+i)*256 + 3] = 0xFFFF*((wfont[c+i]&0x10)>>4);
+                temp_tex[x + (y+i)*256 + 4] = 0xFFFF*((wfont[c+i]&0x08)>>3);
+                temp_tex[x + (y+i)*256 + 5] = 0xFFFF*((wfont[c+i]&0x04)>>2);
+                temp_tex[x + (y+i)*256 + 6] = 0xFFFF*((wfont[c+i]&0x02)>>1);
+                temp_tex[x + (y+i)*256 + 7] = 0xFFFF*(wfont[c+i]&0x01);
+            }
+            c += 16;
+        }
+
+    // Subir a PVR
+    pvr_txr_load_ex(&temp_tex, font_tex, 256, 256, PVR_TXRLOAD_16BPP);
+}
+
+int utf8_to_iso(const char *utf8) {
+    unsigned char c = (unsigned char)utf8[0];
+    if(c < 0x80) return c;            // ASCII directo
+    if((c & 0xE0) == 0xC0) {         // 2 bytes
+        unsigned char c2 = (unsigned char)utf8[1];
+        return ((c & 0x1F) << 6) | (c2 & 0x3F);
+    }
+    return '?'; // fallback
+}
+
+// --- Dibujar un carácter ---
+void draw_char(float x, float y, int c, float scale) {
+    float char_w = 8.0f*scale;
+    float char_h = 16.0f*scale;
+    float or_char_w = 8.0f;
+    float or_char_h = 16.0f;
+    int cols = 32;
+
+    float u = (c % cols)*(or_char_w/256.0f);
+    float v = (c / cols)*(or_char_h/256.0f);
+    float du = or_char_w/256.0f;
+    float dv = or_char_h/256.0f;
+
+    pvr_vertex_t vert;
+    pvr_poly_cxt_t cxt;
+    pvr_poly_hdr_t hdr;
+
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, 256, 256, font_tex, PVR_FILTER_BILINEAR);
+    pvr_poly_compile(&hdr,&cxt);
+    pvr_prim(&hdr,sizeof(hdr));
+
+    vert.flags = PVR_CMD_VERTEX; vert.x=x; vert.y=y; vert.z=1.0f; vert.u=u; vert.v=v; vert.argb=0xFFFFFFFF; vert.oargb=0;
+    pvr_prim(&vert,sizeof(vert));
+
+    vert.x=x+char_w; vert.y=y; vert.u=u+du; vert.v=v; pvr_prim(&vert,sizeof(vert));
+
+    vert.x=x; vert.y=y+char_h; vert.u=u; vert.v=v+dv; pvr_prim(&vert,sizeof(vert));
+
+    vert.flags = PVR_CMD_VERTEX_EOL; vert.x=x+char_w; vert.y=y+char_h; vert.u=u+du; vert.v=v+dv;
+    pvr_prim(&vert,sizeof(vert));
+}
+
+// --- Dibujar cadena ---
+/*void draw_string(float x, float y, const char *str, int max_chars) {
+    float start_x = x;
+    unsigned char ch;
+    int count=0;
+
+    while(*str && count < max_chars) {
+        int consumed = utf8_next(str,&ch);
+        if(ch=='\n') { x=start_x; y+=16.0f*text_scale; }
+        else { draw_char(x,y,ch,text_scale); x+=8.0f*text_scale; count++; }
+        str+=consumed;
+    }
+}*/
+
+void draw_string(float x, float y, const char *str, int max_chars) {
+    float start_x = x;
+    int count = 0;
+
+    while(*str && count < max_chars) {
+        unsigned char idx = utf8_to_font_index(&str);
+
+        if(idx == '\n') { 
+            x = start_x; 
+            y += 16.0f * text_scale; 
+            continue;
+        }
+
+        if(idx != '?') {             // dibujar solo caracteres válidos
+            draw_char(x, y, idx, text_scale);
+            x += 8.0f * text_scale;
+        }
+
+        count++;
+    }
+}
+

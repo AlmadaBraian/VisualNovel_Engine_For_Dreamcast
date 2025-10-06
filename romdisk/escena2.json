@@ -1,0 +1,71 @@
+{
+	"scene": "parque",
+  "script": [
+  {
+  "time": 0,
+  "action": "show_sprite",
+  "sprite": "Marisa",
+  "x": -480,
+  "y": 10,
+  "wait_input": false
+},
+
+{
+  "time": 500,
+  "action": "animate",
+  "sprite": "Marisa",
+  "anim":  "entrar_izquierda",
+  "x": -100,
+  "y": 10,
+  "wait_input": false
+},
+  
+{
+  "action": "show_text",
+  "wait_input": true,
+  "text": [
+    "Marisa logro escapar de la lujuria\nlactosa de Martín."
+  ]
+},
+{"time": 3000,
+  "action": "animate",
+  "sprite": "Marisa",
+  "anim":  "fade_out",
+  "wait_input": false
+},
+{
+  "time": 0,
+  "action": "show_text",
+  "wait_input": true,
+  "text": [
+    ""
+  ]
+}
+
+  ],
+  "background": "/cd/png/obstaculo.png",
+  "sprites": [
+    {
+      "texture": "/cd/png/Marisa.png",
+      "x": -480,
+      "y": 10,
+      "width": 480,
+      "height": 480,
+	  "name": "Marisa",
+	  "alpha": 1
+    },
+	{
+      "texture": "/cd/png/Martin.png",
+      "x": -480,
+      "y": 10,
+      "width": 480,
+      "height": 480,
+	  "name": "Martin",
+	  "alpha": 1
+    }
+  ],
+  "lines": [
+    ""
+  ]
+}
+

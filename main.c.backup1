@@ -1,0 +1,163 @@
+#include <kos.h>
+#include <png/png.h>
+#include <dc/maple.h>
+#include <dc/maple/controller.h>
+#include <stdlib.h>
+#include <string.h>
+#include "font.h"
+#include "sprite.h"
+
+// --- Texturas ---
+pvr_ptr_t bg_tex;
+uint32 bg_w, bg_h;      // tamaño real de la imagen
+uint32 tex_w, tex_h;    // tamaño PVR (potencia de 2)
+pvr_ptr_t textBoxTex;
+uint32 textBox_w, textBox_h;
+
+// --- Escenario ---
+Block escenario = { 0.0f, 300.0f, 640.0f, 200.0f };
+
+#define MAX_SCENES 8
+
+typedef struct {
+    pvr_ptr_t bg_tex;
+    uint32 bg_w, bg_h;
+    Sprite sprites[16];
+    int sprite_count;
+    const char *lines[16];
+    int line_count;
+} Scene;
+
+Scene scenes[MAX_SCENES];
+int current_scene = 0;
+int scene_count = 4;
+
+// --- Diálogo ---
+/*const char *lines[] = {
+    "Era una tarde fria en la ciudad.",
+    "Marisa caminaba sola por el parque.",
+    "De repente, escucho un ruido extraño\ndetras de ella.",
+    "Fin de la demo."
+};
+int current_line = 0;*/
+
+// --- Escenas de ejemplo ---
+//Scene scene1, scene2, scene3;
+//int current_scene = 0;
+
+void scene_init(Scene *scene) {
+    scene->bg_tex = NULL;
+    scene->bg_w = scene->bg_h = 0;
+    scene->sprite_count = 0;
+    scene->line_count = 0;
+}
+
+void scene_add_sprite(Scene *scene, pvr_ptr_t tex, float x, float y, float w, float h, uint32 tex_w, uint32 tex_h) {
+    if(scene->sprite_count >= 16) return;
+    Sprite *s = &scene->sprites[scene->sprite_count++];
+    s->tex = tex;
+    s->x = x; s->y = y;
+    s->width = w; s->height = h;
+    s->tex_w = tex_w; s->tex_h = tex_h;
+}
+
+void scene_add_line(Scene *scene, const char *line) {
+    if(scene->line_count >= 16) return;
+    scene->lines[scene->line_count++] = line;
+}
+
+void scene_render(Scene *scene) {
+	pvr_list_begin(PVR_LIST_OP_POLY);
+    // Fondo
+    if(scene->bg_tex){
+        draw_sprite(0, 0, scene->bg_w, scene->bg_h,
+                    scene->bg_w, scene->bg_h,
+                    next_pow2(scene->bg_w), next_pow2(scene->bg_h),
+                    scene->bg_tex, PVR_LIST_OP_POLY);
+	}
+	pvr_list_finish();
+    // Sprites
+	pvr_list_begin(PVR_LIST_TR_POLY);
+	
+    for(int i=0; i<scene->sprite_count; i++) {
+        Sprite *s = &scene->sprites[i];
+        draw_sprite(s->x, s->y, s->width, s->height,
+                    s->tex_w, s->tex_h,
+                    next_pow2(s->tex_w), next_pow2(s->tex_h),
+                    s->tex, PVR_LIST_TR_POLY);
+    }
+
+    // Caja de texto y líneas
+    draw_block(&escenario, 0x80000000);
+    for(int i=0; i<scene->line_count; i++) {
+        draw_string(20, 310 + i*32, scene->lines[i], 40);  // max_chars = 40
+    }
+	pvr_list_finish();
+}
+
+int main()
+{
+    dbgio_init();
+    cont_init();
+    pvr_init_defaults();
+
+    font_init();
+	
+	// --- Inicializar escenas ---
+    // Inicialización
+	for(int i=0; i<scene_count; i++)
+    scene_init(&scenes[i]);
+
+    // Cargar fondos
+    uint32 tex_w, tex_h;
+    scenes[0].bg_tex = load_png_texture("/rd/casa.png", &scenes[0].bg_w, &scenes[0].bg_h, &tex_w, &tex_h);
+    scenes[1].bg_tex = load_png_texture("/rd/obstaculo.png", &scenes[1].bg_w, &scenes[1].bg_h, &tex_w, &tex_h);
+	scenes[2].bg_tex = load_png_texture("/rd/obstaculo.png", &scenes[2].bg_w, &scenes[2].bg_h, &tex_w, &tex_h);
+
+    // Agregar sprites a scene1
+    pvr_ptr_t char_tex = load_png_texture("/rd/Marisa.png", &tex_w, &tex_h, &tex_w, &tex_h);
+    scene_add_sprite(&scenes[0], char_tex, 250, 10, 480, 480, tex_w, tex_h);
+
+    // Agregar líneas de diálogo
+    scene_add_line(&scenes[0], "Era una tarde fria en la ciudad.");
+    scene_add_line(&scenes[0], "Marisa caminaba sola por el parque.");
+    scene_add_line(&scenes[1], "De repente, escucho un ruido extraño");
+	scene_add_line (&scenes[1], "detras de ella.");
+    scene_add_line(&scenes[2], "Fin de la demo.");
+
+    // --- Cargar background ---
+    //bg_tex = load_png_texture("/rd/obstaculo.png",&bg_w,&bg_h,&tex_w,&tex_h);
+    //if(!bg_tex) { printf("Error cargando fondo.\n"); return -1; }
+
+    // --- Crear textBox ---
+    textBoxTex = create_black_texture(&textBox_w, &textBox_h);
+
+    uint32 prev_buttons = 0;
+
+   while(1) {
+    cont_state_t *st = (cont_state_t*)maple_dev_status(maple_enum_type(0, MAPLE_FUNC_CONTROLLER));
+    uint32 pressed = st ? st->buttons : 0;
+
+    if((!(prev_buttons & CONT_A)) && (pressed & CONT_A)) {
+    current_scene++;
+    if(current_scene >= scene_count)
+        current_scene = scene_count - 1;  // no pasarse
+	}
+    prev_buttons = pressed;
+
+    pvr_wait_ready();
+    pvr_scene_begin();
+
+    // Fondo y sprites
+    //scene_render(current_scene == 0 ? &scene1 : &scene2);
+	scene_render(&scenes[current_scene]);
+	
+
+    pvr_scene_finish();
+}
+
+    pvr_mem_free(bg_tex);
+    pvr_mem_free(textBoxTex);
+    pvr_shutdown();
+    return 0;
+}
