@@ -1,119 +1,206 @@
 {
-	"scene": "intro",
+  "scene": "intro",
   "script": [
-  {
-  "time": 1000,
-  "action": "play_music",
-  "music": "/cd/music/musica_3.wav",
-  "loop": 1,
-  "wait_input": false
-},
-{
-  "action": "show_sprite",
-  "sprite": "Marisa",
-  "x": 250,
-  "y": 10,
-  "wait_input": false
-},
-
-{"time": 2000,
-  "action": "animate",
-  "sprite": "Marisa",
-  "anim":  "fade_in",
-  "wait_input": false,
-  "x": 250,
-  "y": 10
-},
-{
-  "time": 1000,
-  "action": "show_text",
-  "wait_input": true,
-  "text": [
-  "Era una tarde fria en la ciudad.\nMarisa estaba hablando boludeces \ncomo toda mujer boluda \nque habla boludeces",
-	"Ella se estaba preparando \npara irse al parque.",
-    "De repente, escucho un ruido extraño\ndetras de ella."
-  ]
-},
-
-{"time": 3000,
-  "action": "animate",
-  "sprite": "Marisa",
-  "anim":  "fade_out",
-  "wait_input": false
-},
-{"time": 2000,
-  "action": "animate",
-  "sprite": "Martin",
-  "anim":  "entrar_izquierda",
-  "x": -100,
-  "y": 10,
-  "wait_input": false
-},
-{
-  "action": "show_text",
-  "wait_input": true,
-  "text": [
-    "¡No! Martín la intercepta\ncon intenciones inceminatorias."
-  ]
-},
-
-{"time": 3000,
-  "action": "animate",
-  "sprite": "Martin",
-  "anim":  "fade_out",
-  "wait_input": false
-},
-
-{"time": 0,
-  "action": "show_text",
-  "wait_input": false,
-  "text": [
-    "Dale, si te gusta...\nveni para acá.\nDejese querer."
-  ]
-},
-  {
-	"time": 3000,
-  "action": "stop_music",
-  "wait_input": false
-},
-{
-	"time": 1000,
-  "action": "play_music",
-  "music": "/cd/music/musica_1.wav",
-  "loop": 1,
-  "wait_input": false
-},
-{
-  "action": "next_scene",
-  "scene_new": "/rd/escena2.json",
-  "wait_input": false
-}
-
+    {
+      "time": 2000,
+      "action": "show_sprite",
+      "sprite": "BuenosAiresNoche",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "BuenosAiresNoche",
+      "anim": "fade_in",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 1000,
+      "action": "play_music",
+      "music": "/cd/music/city.wav",
+      "loop": 1,
+      "wait_input": false
+    },
+    {
+      "time": 1000,
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "La ciudad de Buenos Aires.",
+        "Una urbe bestial que intimida.\nY mucho más cuando cae la noche.",
+        "Es la primera vez\nque transito sola la ciudad.",
+        "La inseguridad es un problema,\nasi que agarro mi cartera con fuerza\ny acelero mi paso hasta llegar\na la estacion de subte."
+      ]
+    },
+    {
+      "time": 2000,
+      "action": "show_sprite",
+      "sprite": "EstacionSubte",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "BuenosAiresNoche",
+      "anim": "fade_out",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "EstacionSubte",
+      "anim": "fade_in",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 1000,
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "Bajo las escaleras, paso la sube\ny ya estoy dentro.",
+        "Mi corazon va a mil.",
+        "Estoy un poco nerviosa,\nme sudan las manos.",
+        "Mi hermano, Anibal,\nse esforzo mucho para\nconseguirme este trabajo.",
+        "El conoce a alguien de recursos humanos,\nme consiguio un puesto, como seguridad\ndel edificio donde trabaja.",
+        "La plata me estaba\nhaciendo mucha falta.\nAsi que no tuve más opcion\nque aceptar.",
+        "No puedo más de los nervios,\nme sudan las manos.\nSiento un fuerte apreton\nen el estomago.",
+        "Tranquila Erika,\ntodo va a estar bien.",
+        "El subte finalmente llega\ny se detiene frente a mi."
+      ]
+    },
+    {
+      "time": 2000,
+      "action": "show_sprite",
+      "sprite": "subte",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "EstacionSubte",
+      "anim": "fade_out",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "subte",
+      "anim": "fade_in",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 1000,
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "Rapidamente subo y busco un asiento."
+      ]
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "subte",
+      "anim": "fade_out",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 2000,
+      "action": "show_sprite",
+      "sprite": "linea-a-subte",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "linea-a-subte",
+      "anim": "fade_in",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 1000,
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "El vagon está totalmente vacio.\nSoy la unica pasajera.",
+        "Se nota que es de los ultimos viajes\nde la noche."
+      ]
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "linea-a-subte",
+      "anim": "fade_out",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    }
   ],
-  "background": "/cd/png/casa.png",
+  "background": "",
   "sprites": [
     {
-      "texture": "/cd/png/Marisa.png",
-      "x": 640,
-      "y": 10,
-      "width": 480,
-      "height": 480,
-	  "name": "Marisa",
-	  "alpha": 0
+      "texture": "/cd/png/BuenosAiresNoche.png",
+      "x": 0,
+      "y": 0,
+      "width": 318,
+      "height": 212,
+      "name": "BuenosAiresNoche",
+      "alpha": 0,
+      "fondo": 1
     },
-	{
-      "texture": "/cd/png/Martin.png",
-      "x": -480,
-      "y": 10,
-      "width": 480,
-      "height": 480,
-	  "name": "Martin",
-	  "alpha": 1
-	  
+    {
+      "texture": "/cd/png/EstacionSubte.png",
+      "x": 0,
+      "y": 0,
+      "width": 328,
+      "height": 185,
+      "name": "EstacionSubte",
+      "alpha": 0,
+      "fondo": 1
+    },
+    {
+      "texture": "/cd/png/linea-a-subte.png",
+      "x": 0,
+      "y": 0,
+      "width": 495,
+      "height": 371,
+      "name": "linea-a-subte",
+      "alpha": 0,
+      "fondo": 1
+    },
+    {
+      "texture": "/cd/png/subte.png",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 263,
+      "name": "subte",
+      "alpha": 0,
+      "fondo": 1
     }
   ],
   "lines": [
     ""
   ]
 }
-
