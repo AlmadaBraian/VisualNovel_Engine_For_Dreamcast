@@ -19,12 +19,12 @@
             "wait_input": false
         },
         {
-            "time": 500,
+            "time": 2000,
             "action": "space",
             "wait_input": false
         },
         {
-            "time": 2000,
+            "time": 1000,
             "action": "animate",
             "sprite": "LaBachaSoft",
             "anim": "fade_out",
@@ -55,12 +55,12 @@
             "wait_input": false
         },
         {
-            "time": 500,
+            "time": 2000,
             "action": "space",
             "wait_input": false
         },
         {
-            "time": 2000,
+            "time": 1000,
             "action": "animate",
             "sprite": "LosBichosdeAxel",
             "anim": "fade_out",

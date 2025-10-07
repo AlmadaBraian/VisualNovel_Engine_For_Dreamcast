@@ -11,8 +11,8 @@
     },
     {
       "time": 1000,
-      "action": "play_music",
-      "music": "/cd/music/city.wav",
+      "action": "play_sound_L",
+      "music": "/cd/sound/city.wav",
       "loop": 1,
       "wait_input": false,
       "volume": 170
@@ -50,7 +50,7 @@
       ]
     },
     {
-      "time": 3000,
+      "time": 1000,
       "action": "animate",
       "sprite": "BuenosAiresNoche",
       "anim": "fade_out",
@@ -59,14 +59,14 @@
       "wait_input": false
     },
     {
-      "time": 1000,
+      "time": 500,
       "action": "space",
       "wait_input": false
     },
     {
       "time": 5000,
       "action": "play_sound_L",
-      "sound": "/rd/Escaleras.wav",
+      "sound": "/cd/sound/Escaleras.wav",
       "wait_input": false,
       "volume": 255
     },
@@ -118,7 +118,7 @@
     {
       "time": 20000,
       "action": "play_sound_L",
-      "sound": "/rd/subte_llega.wav",
+      "sound": "/cd/sound/subte_llega.wav",
       "wait_input": false,
       "volume": 255
     },
@@ -153,6 +153,14 @@
       "wait_input": true,
       "text": [
         "Rapidamente subo y busco un asiento."
+      ]
+    },
+    {
+      "time": 500,
+      "action": "show_text",
+      "wait_input": false,
+      "text": [
+        ""
       ]
     },
     {
@@ -200,7 +208,7 @@
     {
       "time": 13000,
       "action": "play_sound_L",
-      "sound": "/rd/Ruido_subte.wav",
+      "sound": "/cd/sound/Ruido_subte.wav",
       "wait_input": false,
       "volume": 255
     },

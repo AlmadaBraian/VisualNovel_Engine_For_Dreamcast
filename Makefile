@@ -7,13 +7,14 @@ LD = kos-cc
 CFLAGS = -O2 -Wall -g -I. -Ipl_mpegDC-master -Ipl_mpegDC-master/bleedingedge/ -DKOS
 
 # Objetos
-OBJS = $(SRCS:.c=.o) main.o font.o sprite.o wfont.o wfont_widths.o scene.o script.o cJSON.o audio.o menu.o romdisk.o
+OBJS = $(SRCS:.c=.o) main.o font.o sprite.o wfont.o wfont_widths.o scene.o script.o cJSON.o audio.o menu.o video_player.o romdisk.o
 
 # Archivo final
 TARGET = juego.elf
 KOS_ROMDISK_DIR = romdisk
 
 MUSIC_DIR = music
+SOUND_DIR = sound
 FRAMES_DIR = frames_kmg
 PNG_DIR = png
 CD_DIR = cd
@@ -48,11 +49,14 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 # Reglas de compilación de los .o
-main.o: main.c font.h sprite.h scene.h script.h audio.h menu.h pl_mpeg.h
+main.o: main.c font.h sprite.h scene.h script.h audio.h menu.h video_player.h
 	$(CC) $(CFLAGS) -c main.c
 	
 sprite.o: sprite.c sprite.h
 	$(CC) $(CFLAGS) -c sprite.c
+
+video_player.o: video_player.c video_player.h pl_mpeg.h
+	$(CC) $(CFLAGS) -c video_player.c
 
 font.o: font.c font.h sprite.h
 	$(CC) $(CFLAGS) -c font.c
@@ -111,8 +115,10 @@ copy-resources: $(TARGET)
 	mkdir -p $(CD_ROOT)/data
 	mkdir -p $(CD_ROOT)/music
 	mkdir -p $(CD_ROOT)/png
+	mkdir -p $(CD_ROOT)/sound
 	cp $(TARGET) $(CD_ROOT)/data/
 	cp -u $(MUSIC_DIR)/*.wav $(CD_ROOT)/music || true
+	cp -u $(SOUND_DIR)/*.wav $(CD_ROOT)/sound || true
 	cp -u $(PNG_DIR)/*.png $(CD_ROOT)/png || true
 	cp -u $(KOS_ROMDISK_DIR).o $(CD_ROOT)/data/
 
@@ -128,6 +134,7 @@ cdi:
 		-e $(CD_ROOT)/data/$(TARGET) \
 		-p $(CD_ROOT)/IP.BIN \
 		-d $(CD_ROOT)/music \
+		-d $(CD_ROOT)/sound \
 		-d $(CD_ROOT)/png \
 		-f $(CD_ROOT)/video_audio.wav \
 		-f $(CD_ROOT)/intro.mpg \

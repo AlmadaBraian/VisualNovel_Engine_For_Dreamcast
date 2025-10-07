@@ -34,11 +34,11 @@ void menu_draw(Menu *menu) {
 }
 
 void start_new_game_callback(void) {
-    //current_scene = 0;
     end_scene = 0;
     change_scene("/rd/escena.json");
     state = STATE_GAME;
     draw_text_box = true;
+    audio_stop_music();
 
 }
 

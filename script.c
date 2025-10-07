@@ -446,18 +446,13 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
             strncpy(next_scene_name, act->scene_new, sizeof(next_scene_name));
             next_scene_name[sizeof(next_scene_name) - 1] = '\0'; // seguridad
             start_scene_transition(change_scene_callback, 1000); // 1 segundo
-                                                                 // printf("[SCRIPT] Parando musica en cambio de escena");
-            // audio_stop_music();
-            // change_scene(act->scene_new);
-            // script_reset();
-            // return; // Salimos para no procesar más de esta acción
-            //}
+                                                                 
+            printf("[SCRIPT] Parando musica en cambio de escena");
             break;
         case ACTION_SPACE:
 
             break;
             case ACTION_END:
-                //scene_clear(scene);
                 end_scene = 1;
             break;
         }

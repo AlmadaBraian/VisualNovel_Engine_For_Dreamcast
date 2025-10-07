@@ -14,7 +14,6 @@ int scene_count = 0;
 SceneTransition g_transition = {0};
 FadeState g_fade;
 bool draw_text_box = false;
-// Sprite *buttons_sheet = NULL;
 
 uint32 w_fuente = 512;
 uint32 h_fuente = 372;
@@ -133,7 +132,6 @@ void scene_clear(Scene *scene)
             scene->sprites[i].tex = NULL;
         }
     }
-    // scene->sprite_count = 0;
 
     memset(scene->sprites, 0, sizeof(scene->sprites));
     scene->sprite_count = 0;
@@ -290,7 +288,6 @@ void load_scene_from_json(Scene *scene, const char *filename)
             scene->bg_w = 640; // ancho de pantalla
             scene->bg_h = 480; // alto de pantalla
         }
-        // const char *tex_path = tex_item->valuestring;
     }
 
     // --- Sprites ---
@@ -353,7 +350,6 @@ void load_scene_from_json(Scene *scene, const char *filename)
             // --- Agregar sprite a la escena ---
             scene_add_sprite(name, scene, tex, x, y, w, h, tex_w, tex_h,
                              alpha, alpha_speed, fading_out, fading_in, file, fondo);
-            // tex_font = load_png_texture("/cd/png/wfont_visual.png", &w_fuente, &h_fuente, &w_fuente, &h_fuente);
         }
     }
 
@@ -397,7 +393,6 @@ void load_scene_from_json(Scene *scene, const char *filename)
 
     cJSON_Delete(root);
     free(json_data);
-    // load_buttons();
 }
 
 void load_scene_with_textures(Scene *scene, const char *json_file)
@@ -466,13 +461,7 @@ void scene_render(Scene *scene)
         buf[len] = '\0';
         // debug_draw_script(20.0f, 30.0f);
         draw_string(20, 340, buf, len, &len, 1.0f);
-
-        // draw_sprite(10, 10, w_fuente, h_fuente, w_fuente, h_fuente, next_pow2(w_fuente), next_pow2(h_fuente), tex_font, PVR_LIST_TR_POLY, 1);
     }
-
-    /*draw_sprite(50.0f, 40.0f, 128.0f, 110.f,
-                     bt_tex_w, bt_tex_h, next_pow2(bt_tex_w), next_pow2(bt_tex_h),
-                     buttons_tex, PVR_LIST_TR_POLY, 1.0f);*/
     if (showButton)
     {
         draw_sprite_anim(
@@ -533,4 +522,40 @@ void draw_fade_overlay(float alpha)
     vert.y = 480.0f;
     vert.flags = PVR_CMD_VERTEX_EOL;
     pvr_prim(&vert, sizeof(vert));
+}
+
+void fade_update(int delta_ms)
+{
+    if (!g_fade.active)
+        return;
+    printf("Activando el fade\n");
+    g_fade.elapsed_ms += delta_ms;
+    float t = (float)g_fade.elapsed_ms / (float)g_fade.duration_ms;
+    if (t > 1.0f)
+        t = 1.0f;
+
+    if (g_fade.fading_out)
+    {
+        printf("Fade-out: se oscurece\n");
+        g_fade.alpha = t; // Fade-out: se oscurece
+    }
+    else if (g_fade.fading_in)
+    {
+        printf("Fade-in: se aclara\n");
+        g_fade.alpha = 1.0f - t; // Fade-in: se aclara
+    }
+
+    if (t >= 1.0f)
+    {
+        printf("t >= 1.0f\n");
+        g_fade.active = 0;
+        if (g_fade.on_complete)
+        {
+            printf("Fade completado -> callback\n");
+            g_fade.on_complete();
+            g_fade.on_complete = NULL;
+        }
+        g_fade.fading_out = 0;
+        g_fade.fading_in = 0;
+    }
 }

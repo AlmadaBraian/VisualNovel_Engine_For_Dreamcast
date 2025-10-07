@@ -95,4 +95,6 @@ extern FadeState g_fade;
 
 void free_scene_resources(Scene *scene);
 
+void fade_update(int delta_ms);
+
 #endif // SCENE_H
