@@ -7,7 +7,7 @@
 typedef struct {
     char name[32];
     float x, y;
-    float width, height;
+    uint32 width, height;
     uint32 tex_w, tex_h;
     pvr_ptr_t tex;
     int visible;
@@ -20,6 +20,7 @@ typedef struct {
 	int fading_out;       // flag si está desvaneciéndose
 	int fading_in;       // flag si está desvaneciéndose
     char file[128];   // archivo PNG asociado
+    int fondo;
 } Sprite;
 
 typedef struct {
@@ -48,6 +49,10 @@ pvr_ptr_t create_black_texture(uint32 *w, uint32 *h);
 void sprite_load_texture(Sprite *s, const char *file);
 
 void sprite_free_texture(Sprite *s);
+
+void draw_sprite_anim(float x, float y, float draw_w, float draw_h,
+                      int frame, int frames_per_row, uint32 tex_w, uint32 tex_h,
+                      pvr_ptr_t tex, int row, int total_rows);
 
 
 #endif

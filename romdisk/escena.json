@@ -1,5 +1,5 @@
 {
-  "scene": "intro",
+  "scene": "Prologo",
   "script": [
     {
       "time": 1000,
@@ -20,10 +20,7 @@
     {
       "time": 2000,
       "action": "space",
-      "wait_input": false,
-      "text": [
-        ""
-      ]
+      "wait_input": false
     },
     {
       "time": 2000,

@@ -34,15 +34,16 @@ void menu_draw(Menu *menu) {
 }
 
 void start_new_game_callback(void) {
-    current_scene = 0;
+    //current_scene = 0;
+    end_scene = 0;
     change_scene("/rd/escena.json");
     state = STATE_GAME;
-    printf("start_new_game_callback\n");
+    draw_text_box = true;
+
 }
 
 // --- Fade to black y carga de nueva partida ---
 void start_new_game_with_fade(void (*callback)(void)) {
-    printf("start_new_game_with_fade\n");
     g_fade.active = 1;
     g_fade.alpha = 0.0f;
     g_fade.duration_ms = 1000;
@@ -82,8 +83,7 @@ void menu_update(Menu *menu, cont_state_t *st, int *menu_active) {
 		audio_play_sound("acept");;
         switch (menu->selected) {
 			case MENU_NEW_GAME:
-            printf("Menu new game\n");
-			audio_stop_music();
+			//audio_stop_music();
 			start_new_game_with_fade(start_new_game_callback);
 			*menu_active = 0;
 			break;

@@ -1,0 +1,108 @@
+{
+    "scene": "Intro",
+    "script": [
+        {
+            "time": 1000,
+            "action": "show_sprite",
+            "sprite": "LaBachaSoft",
+            "x": 0,
+            "y": 0,
+            "wait_input": false
+        },
+        {
+            "time": 2000,
+            "action": "animate",
+            "sprite": "LaBachaSoft",
+            "anim": "fade_in",
+            "x": 0,
+            "y": 0,
+            "wait_input": false
+        },
+        {
+            "time": 500,
+            "action": "space",
+            "wait_input": false
+        },
+        {
+            "time": 2000,
+            "action": "animate",
+            "sprite": "LaBachaSoft",
+            "anim": "fade_out",
+            "x": 0,
+            "y": 0,
+            "wait_input": false
+        },
+        {
+            "time": 500,
+            "action": "space",
+            "wait_input": false
+        },
+        {
+            "time": 500,
+            "action": "show_sprite",
+            "sprite": "LosBichosdeAxel",
+            "x": 0,
+            "y": 0,
+            "wait_input": false
+        },
+        {
+            "time": 2000,
+            "action": "animate",
+            "sprite": "LosBichosdeAxel",
+            "anim": "fade_in",
+            "x": 0,
+            "y": 0,
+            "wait_input": false
+        },
+        {
+            "time": 500,
+            "action": "space",
+            "wait_input": false
+        },
+        {
+            "time": 2000,
+            "action": "animate",
+            "sprite": "LosBichosdeAxel",
+            "anim": "fade_out",
+            "x": 0,
+            "y": 0,
+            "wait_input": false
+        },
+        {
+            "time": 500,
+            "action": "space",
+            "wait_input": false
+        },
+        {
+            "time": 500,
+            "action": "end",
+            "wait_input": false
+        }
+    ],
+    "background": "",
+    "sprites": [
+        {
+            "texture": "/cd/png/LosBichosdeAxel.png",
+            "x": 0,
+            "y": 0,
+            "width": 512,
+            "height": 512,
+            "name": "LosBichosdeAxel",
+            "alpha": 0,
+            "fondo": 1
+        },
+        {
+            "texture": "/cd/png/LaBachaSoft.png",
+            "x": 0,
+            "y": 0,
+            "width": 512,
+            "height": 512,
+            "name": "LaBachaSoft",
+            "alpha": 0,
+            "fondo": 1
+        }
+    ],
+    "lines": [
+        ""
+    ]
+}

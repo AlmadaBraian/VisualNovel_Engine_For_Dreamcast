@@ -36,6 +36,8 @@ int video_height;
 Scene scenes[MAX_SCENES];
 char buffer[256];
 
+Scene intro;
+
 // Variables globales PVR
 pvr_poly_cxt_t cxt;
 pvr_poly_hdr_t hdr;
@@ -47,9 +49,10 @@ void render_video_frame();
 void yuv420_to_yuv422(plm_frame_t *frame, uint16_t *vram);
 void on_video_fadeout_complete();
 void on_menu_fadeout_complete();
+void print_memory_status();
 
-uint32 bt_w, bt_h;   // tamaño real de la imagen
-uint32 tex_w, tex_h; // tamaño PVR (potencia de 2)
+uint32 bt_w, bt_h;         // tamaño real de la imagen
+uint32 bt_tex_w, bt_tex_h; // tamaño PVR (potencia de 2)
 
 void fade_update(int delta_ms)
 {
@@ -93,7 +96,109 @@ Menu main_menu;
 plm_t *mpeg;
 pvr_ptr_t buttons_tex;
 int playing_video;
-int state = STATE_MENU;
+int state = STATE_INTRO;
+
+void play_intro_video()
+{
+    uint32_t prev_secs = 0, prev_ms = 0;
+    // --- Cargar video ---
+    mpeg = plm_create_with_filename("/cd/intro.mpg");
+    if (!mpeg)
+    {
+        printf("No se pudo abrir intro.mpg\n");
+        return;
+    }
+    plm_set_audio_enabled(mpeg, 0); // Audio externo
+
+    // Reproducir WAV externo
+    audio_play_music("/cd/video_audio.wav", 0);
+
+    uint64_t video_start_ms = timer_ms_gettime64();
+    plm_frame_t *frame = NULL;
+    int final_frame_rendered = 0; // flag: ya renderizamos el último frame convertido en video_tex
+
+    while (playing_video || g_fade.active)
+    {
+        cont_state_t *st = (cont_state_t *)maple_dev_status(maple_enum_type(0, MAPLE_FUNC_CONTROLLER));
+        uint32 pressed = st ? st->buttons : 0;
+
+        uint32_t now_secs = 0, now_ms = 0;
+        timer_ms_gettime(&now_secs, &now_ms);
+        int delta_ms = (int)((now_secs - prev_secs) * 1000 + (now_ms - prev_ms));
+        if (delta_ms < 0)
+            delta_ms = 0;
+        if (delta_ms > 200)
+            delta_ms = 200;
+        prev_secs = now_secs;
+        prev_ms = now_ms;
+
+        // --- Actualiza lógica de fades ---
+        fade_update(delta_ms);
+
+        // Decodificar siguiente frame (puede devolver NULL cuando el video terminó)
+        frame = plm_decode_video(mpeg);
+
+        if (!frame || (pressed & CONT_A))
+        {
+            // Video finalizado: si no hay fade activo, iniciar fade-out una vez
+            if (!g_fade.active)
+            {
+                printf("Se presiono A (skip)\n");
+                g_fade.active = 1;
+                g_fade.elapsed_ms = 0;
+                g_fade.duration_ms = 600;
+                g_fade.alpha = 0.0f;
+                g_fade.fading_out = 1;
+                playing_video = 0;
+                g_fade.on_complete = on_video_fadeout_complete;
+                printf("[play_intro_video] video terminó -> iniciando fade out\n");
+            }
+            if (!frame)
+            {
+                g_fade.on_complete = on_video_fadeout_complete;
+                break;
+            }
+            // No hay frame nuevo; vamos a renderizar **el último frame** que ya esté en video_tex.
+            // No llamamos a yuv420_to_yuv422 ni usamos 'frame'.
+            // Indicamos que estamos renderizando el final (opcional)
+            final_frame_rendered = 1;
+        }
+        else
+        {
+            // Tenemos frame válido: convertir y subir a VRAM
+            uint64_t target_ms = video_start_ms + (uint64_t)(frame->time * 1000.0);
+            // esperar hasta el pts del frame
+            while (timer_ms_gettime64() < target_ms)
+                thd_sleep(1);
+
+            yuv420_to_yuv422(frame, (uint16_t *)video_tex);
+        }
+
+        // Renderizar (usamos lo que haya en video_tex; si frame era NULL se mostrará el último)
+        pvr_wait_ready();
+        pvr_scene_begin();
+        pvr_set_bg_color(0.0f, 0.0f, 0.0f);
+
+        pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY,
+                         PVR_TXRFMT_YUV422 | PVR_TXRFMT_NONTWIDDLED,
+                         VIDEO_W, VIDEO_H, video_tex, PVR_FILTER_NONE);
+        pvr_poly_compile(&hdr, &cxt);
+
+        pvr_list_begin(PVR_LIST_OP_POLY);
+        render_video_frame(frame); // tu render usa el video_tex, no debería depender de frame si es NULL
+        pvr_list_finish();
+
+        pvr_list_begin(PVR_LIST_TR_POLY);
+        if (g_fade.alpha > 0.0f)
+            draw_fade_overlay(g_fade.alpha);
+        pvr_list_finish();
+
+        pvr_scene_finish();
+    }
+    // detén audio del video si está sonando
+    //audio_stop_music();
+}
+
 int main()
 {
     // -------------------
@@ -106,7 +211,7 @@ int main()
     audio_init();
     font_init();
     playing_video = 1;
-    buttons_tex = load_png_texture("/rd/botones.png", &bt_w, &bt_h, &tex_w, &tex_h);
+    buttons_tex = load_png_texture("/rd/botones2.png", &bt_w, &bt_h, &bt_tex_w, &bt_tex_h);
 
     // Inicializar fade (valores seguros)
     g_fade.active = 0;
@@ -123,7 +228,8 @@ int main()
     for (int i = 0; i < scene_count; i++)
         scene_init(&scenes[i]);
     int ignore_input_until_release = 0;
-
+    scene_init(&intro);
+    change_scene("/rd/intro.json");
     uint32_t prev_secs = 0, prev_ms = 0;
     // uint32 prev_buttons = 0;
 
@@ -141,7 +247,7 @@ int main()
     pvr_poly_compile(&hdr, &cxt);
 
     // Cargar video
-    mpeg = plm_create_with_filename("/cd/intro.mpg");
+    /*mpeg = plm_create_with_filename("/cd/intro.mpg");
     if (!mpeg)
     {
         printf("No se pudo abrir intro.mpg\n");
@@ -160,107 +266,22 @@ int main()
     printf("Video real: %dx%d, textura usada: %dx%d\n",
            video_width, video_height, VIDEO_W, VIDEO_H);
 
-    uint64_t video_start_ms = timer_ms_gettime64();
+    uint64_t video_start_ms = timer_ms_gettime64();*/
     // -------------------
     // Loop principal
     // -------------------
-    state = STATE_MENU;
+    // state = STATE_VIDEO;
     plm_frame_t *frame;
     uint8_t frame_num = 0;
 
     // double last_frame_time = 0.0;
-
-    while (playing_video || g_fade.active)
-    {
-        cont_state_t *st = (cont_state_t *)maple_dev_status(maple_enum_type(0, MAPLE_FUNC_CONTROLLER));
-        uint32 pressed = st ? st->buttons : 0;
-
-        uint32_t now_secs = 0, now_ms = 0;
-        timer_ms_gettime(&now_secs, &now_ms);
-        int delta_ms = (int)((now_secs - prev_secs) * 1000 + (now_ms - prev_ms));
-
-        if (delta_ms < 0)
-            delta_ms = 0;
-        if (delta_ms > 200)
-            delta_ms = 200;
-
-        prev_secs = now_secs;
-        prev_ms = now_ms;
-
-        // --- Calcular delta ---
-        fade_update(delta_ms);
-        // uint64 start_time_ms = timer_ms_gettime64();
-        //  tiempo actual desde que empezó el video
-        // double now = (timer_ms_gettime64() - start_time_ms) / 1000.0;
-        frame = plm_decode_video(mpeg);
-        /*if (!frame || (pressed & CONT_A))
-        {
-            state = STATE_MENU;
-            plm_destroy(mpeg);
-            audio_stop_music();
-            menu_active = 1;
-            menu_init(&main_menu);
-            break;
-        }*/
-        // --- Actualizar video solo si no hay fade activo ---
-
-        // Esperar el tiempo correcto según el frame
-        // double wait = frame->time - last_frame_time;
-
-        // target = PTS en ms desde inicio
-        uint64_t target_ms = video_start_ms + (uint64_t)(frame->time * 1000.0);
-
-        // Esperar hasta que toque mostrar este frame
-        while (timer_ms_gettime64() < target_ms)
-        {
-            thd_sleep(1); // cede CPU
-        }
-
-        // Convertir y cargar frame en VRAM
-        yuv420_to_yuv422(frame, (uint16_t *)video_tex);
-
-        if ((pressed & CONT_A) && !g_fade.active)
-        {
-            printf("Se presiono A\n");
-            g_fade.active = 1;
-            g_fade.elapsed_ms = 0;
-            g_fade.duration_ms = 600;
-            g_fade.alpha = 0.0f;
-            g_fade.fading_out = 1;
-            g_fade.on_complete = on_video_fadeout_complete;
-        }
-
-        dbgio_printf("fade: active=%d out=%d in=%d alpha=%.2f\n",
-                     g_fade.active, g_fade.fading_out, g_fade.fading_in, g_fade.alpha);
-        // Renderizar
-        pvr_wait_ready();
-        pvr_scene_begin();
-        pvr_set_bg_color(0.0f, 0.0f, 0.0f);
-        pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY,
-                         PVR_TXRFMT_YUV422 | PVR_TXRFMT_NONTWIDDLED,
-                         VIDEO_W, VIDEO_H, video_tex, PVR_FILTER_NONE);
-        pvr_poly_compile(&hdr, &cxt);
-        pvr_list_begin(PVR_LIST_OP_POLY);
-        render_video_frame(frame);
-        pvr_list_finish();
-
-        pvr_list_begin(PVR_LIST_TR_POLY);
-        /* draw_sprite(50.0f, 40.0f, 128.0f, 110.f,
-                     bt_w, bt_h, next_pow2(bt_w), next_pow2(bt_h),
-                     buttons_tex, PVR_LIST_TR_POLY, 1.0f);*/
-
-        if (g_fade.alpha > 0.0f)
-            draw_fade_overlay(g_fade.alpha);
-
-        pvr_list_finish();
-        pvr_scene_finish();
-    }
     // timer_ms_gettime(&prev_secs, &prev_ms);
 
     while (1)
     {
 
         cont_state_t *st = (cont_state_t *)maple_dev_status(maple_enum_type(0, MAPLE_FUNC_CONTROLLER));
+        uint32 pressed = st ? st->buttons : 0;
 
         // Obtener tiempo actual
         uint32_t now_secs = 0, now_ms = 0;
@@ -272,9 +293,55 @@ int main()
             delta_ms = 200;
         prev_secs = now_secs;
         prev_ms = now_ms;
+        Scene *s = &scenes[current_scene];
         /* code */
         switch (state)
         {
+
+        case STATE_INTRO:
+            fade_update(delta_ms);
+            // uint32_t now_secs = 0, now_ms = 0;
+            // timer_ms_gettime(&now_secs, &now_ms);
+            //  Calcular delta en milisegundos
+            // printf("New game\n");
+            // cont_state_t *st = (cont_state_t *)maple_dev_status(maple_enum_type(0, MAPLE_FUNC_CONTROLLER));
+            script_update(&scenes[current_scene], delta_ms, (pressed & CONT_A));
+
+            if (s->text_lines && s->text_line_index < s->text_line_count)
+            {
+                const char *line = s->text_lines[s->text_line_index];
+
+                // Máquina de escribir
+                if (s->chars_displayed < strlen(line))
+                {
+                    s->chars_displayed++;
+                }
+            }
+
+            // prev_buttons = pressed;
+
+            // --- Render ---
+            pvr_wait_ready();
+            pvr_scene_begin();
+            // --- Actualizar animaciones ---
+            // script_update(s, delta_ms);
+            update_animations(&scenes[current_scene], delta_ms);
+            update_transition(delta_ms);
+            // update_music();
+            scene_render(&scenes[current_scene]);
+            // snprintf(buffer, sizeof(buffer), "Time: %d", delta_ms);
+            // draw_string(20.f, 310.0f, buffer, strlen(buffer), NULL, 1.0f);
+            pvr_scene_finish();
+
+            if (end_scene == 1)
+            {
+                end_scene = 0;
+                state = STATE_VIDEO;
+            }
+            break;
+        case STATE_VIDEO:
+            play_intro_video();
+            break;
 
         case STATE_MENU:
 
@@ -303,7 +370,7 @@ int main()
                 }
             }
 
-            dbgio_printf("delta=%d alpha=%.3f active=%d\n", /* delta_ms */ 0, g_fade.alpha, g_fade.active);
+            // dbgio_printf("delta=%d alpha=%.3f active=%d\n", /* delta_ms */ 0, g_fade.alpha, g_fade.active);
 
             // Render del menú
             pvr_wait_ready();
@@ -323,11 +390,11 @@ int main()
             // uint32_t now_secs = 0, now_ms = 0;
             // timer_ms_gettime(&now_secs, &now_ms);
             //  Calcular delta en milisegundos
-            printf("New game\n");
-            cont_state_t *st = (cont_state_t *)maple_dev_status(maple_enum_type(0, MAPLE_FUNC_CONTROLLER));
-            uint32 pressed = st ? st->buttons : 0;
+            // printf("New game\n");
+            // cont_state_t *st = (cont_state_t *)maple_dev_status(maple_enum_type(0, MAPLE_FUNC_CONTROLLER));
+            // uint32 pressed = st ? st->buttons : 0;
             script_update(&scenes[current_scene], delta_ms, (pressed & CONT_A));
-            Scene *s = &scenes[current_scene];
+            // Scene *s = &scenes[current_scene];
 
             if (s->text_lines && s->text_line_index < s->text_line_count)
             {
@@ -359,7 +426,8 @@ int main()
         default:
             break;
         }
-        pvr_scene_finish();
+        // pvr_scene_finish();
+        // print_memory_status();
     }
     // Cleanup
     pvr_shutdown();
@@ -440,14 +508,23 @@ void on_video_fadeout_complete()
     state = STATE_MENU; // Cambiar al menú
     menu_active = 1;
     menu_init(&main_menu);
-
-    g_fade.active = 1; // Iniciar fade-in
-    g_fade.elapsed_ms = 0;
-    g_fade.duration_ms = 600;
-    g_fade.alpha = 1.0f;
-    g_fade.fading_out = 0;
-    g_fade.fading_in = 1;
     playing_video = 0;
-    // No destruimos video ni textura aquí: lo hacemos en el loop, una vez que el menú empieza a renderizar
-    // audio_stop_music();
+    // state = STATE_MENU;
+    //  No destruimos video ni textura aquí: lo hacemos en el loop, una vez que el menú empieza a renderizar
+    //  audio_stop_music();
+}
+void print_memory_status()
+{
+    struct mallinfo mi = mallinfo();
+    size_t free_ram = mi.fordblks;
+    size_t used_ram = mi.uordblks;
+    size_t total_ram = free_ram + used_ram;
+    size_t free_vram = pvr_mem_available();
+
+    printf("---- ESTADO DE MEMORIA ----\n");
+    printf("RAM total : %u KB\n", total_ram / 1024);
+    printf("RAM usada : %u KB\n", used_ram / 1024);
+    printf("RAM libre : %u KB\n", free_ram / 1024);
+    printf("VRAM libre: %u KB\n", free_vram / 1024);
+    printf("----------------------------\n");
 }

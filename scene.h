@@ -15,6 +15,10 @@
 
 extern int current_scene;
 
+extern pvr_ptr_t buttons_tex;
+extern uint32 bt_tex_w, bt_tex_h;
+extern bool draw_text_box;
+
 typedef struct {
     pvr_ptr_t bg_tex;
     uint32 bg_w, bg_h;
@@ -70,7 +74,7 @@ extern int scene_count;
 // Funciones de manejo de escenas
 void scene_init(Scene *scene);
 void scene_add_sprite(const char *name, Scene *scene, pvr_ptr_t tex, float x, float y, float w, float h,
-                      uint32 tex_w, uint32 tex_h, float alpha, float alpha_speed, int fading_out, int fading_in, const char *file);
+                      uint32 tex_w, uint32 tex_h, float alpha, float alpha_speed, int fading_out, int fading_in, const char *file, int fondo);
 void scene_add_line(Scene *scene, const char *line);
 void scene_next_line(Scene *scene);
 void scene_render(Scene *scene);
@@ -88,5 +92,7 @@ typedef struct {
 } FadeState;
 
 extern FadeState g_fade;
+
+void free_scene_resources(Scene *scene);
 
 #endif // SCENE_H

@@ -6,21 +6,28 @@
 #include "scene.h"
 #include "audio.h"
 #define MAX_TEXT_LINES 16  // máximo de líneas por acción
+#define NEXT_SCENE_NAME_SIZE 128
 
+extern int end_scene;
 
+extern char pending_scene_name[NEXT_SCENE_NAME_SIZE];
+extern int pending_scene_change;
 typedef enum {
     ACTION_SHOW_SPRITE,
 	ACTION_OFF_SPRITE,
     ACTION_PLAY_SOUND,
+    ACTION_PLAY_SOUND_L,
     ACTION_ANIMATE,
     ACTION_SHOW_TEXT,
     ACTION_PLAY_MUSIC,
 	ACTION_STOP_MUSIC,
-	ACTION_NEXT_SCENE
+	ACTION_NEXT_SCENE,
+    ACTION_SPACE,
+    ACTION_END
 } ActionType;
 
 typedef struct {
-    int time_ms;
+    uint32_t time_ms;
     ActionType type;
     char sprite[64];
     char anim[64];
@@ -28,6 +35,7 @@ typedef struct {
     char music[64];
     int x, y;
     int loop;
+    uint8_t volume;
         // Para texto tipo array
     int text_line_count;
     char *text_lines[MAX_TEXT_LINES];
@@ -48,6 +56,8 @@ typedef struct {
 extern char next_scene_name[128]; // buffer temporal para el nombre
 
 extern Script current_script;
+
+extern bool showButton;
 
 const char *script_get_current_text();
 

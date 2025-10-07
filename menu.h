@@ -17,7 +17,8 @@ typedef enum
 {
     STATE_VIDEO,
     STATE_MENU,
-    STATE_GAME
+    STATE_GAME,
+    STATE_INTRO
 } AppState;
 
 typedef struct {
