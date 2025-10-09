@@ -89,7 +89,8 @@
             "height": 512,
             "name": "LosBichosdeAxel",
             "alpha": 0,
-            "fondo": 1
+            "fondo": 1,
+            "scale": 1
         },
         {
             "texture": "/cd/png/LaBachaSoft.png",
@@ -99,7 +100,8 @@
             "height": 512,
             "name": "LaBachaSoft",
             "alpha": 0,
-            "fondo": 1
+            "fondo": 1,
+            "scale": 1
         }
     ],
     "lines": [

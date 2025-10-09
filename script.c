@@ -7,9 +7,11 @@
 #include "scene.h"
 #include "script.h"
 #include "audio.h"
+#include "video_player.h"
 
 Script current_script = {0};
 bool showButton = false;
+bool showName = false;
 char next_scene_name[NEXT_SCENE_NAME_SIZE];
 int end_scene = 0;
 char pending_scene_name[NEXT_SCENE_NAME_SIZE] = {0};
@@ -32,6 +34,8 @@ ActionType parse_action_type(const char *str)
         return ACTION_SHOW_TEXT;
     if (strcmp(str, "play_music") == 0)
         return ACTION_PLAY_MUSIC;
+    if (strcmp(str, "play_video") == 0)
+        return ACTION_PLAY_VIDEO;
     if (strcmp(str, "stop_music") == 0)
         return ACTION_STOP_MUSIC;
     if (strcmp(str, "next_scene") == 0)
@@ -54,7 +58,7 @@ void change_scene_callback(void)
 }
 
 // Esta función inicia un "movimiento" del sprite
-void start_animation(Scene *scene, const char *sprite_name, const char *anim_name, int final_x, int final_y, int delta_ms)
+void start_animation(Scene *scene, const char *sprite_name, const char *anim_name, int final_x, int final_y, int delta_ms, float speed)
 {
     for (int i = 0; i < scene->sprite_count; i++)
     {
@@ -66,7 +70,7 @@ void start_animation(Scene *scene, const char *sprite_name, const char *anim_nam
             {
                 s->target_x = s->x + 100; // mover 100px a la derecha
                 s->target_y = s->y;
-                s->speed_x = 2.0f; // px por frame
+                s->speed_x = speed; // px por frame
                 s->speed_y = 0;
                 s->animating = 1;
             }
@@ -74,31 +78,41 @@ void start_animation(Scene *scene, const char *sprite_name, const char *anim_nam
             {
                 s->target_x = s->x - 100;
                 s->target_y = s->y;
-                s->speed_x = 2.0f;
+                s->speed_x = speed;
                 s->speed_y = 0;
                 s->animating = 1;
             }
             else if (strcmp(anim_name, "entrar_izquierda") == 0)
             {
-                s->x = -s->width;
+                float ancho = (float)(int)s->width;
+                s->x = -ancho;
                 s->target_x = final_x;
                 s->target_y = s->y;
-                s->speed_x = 2.0f;
+                s->speed_x = speed;
                 s->speed_y = 0;
+                s->visible = 1;
+                s->animating = 1;
+                s->alpha = 1.0f;
+
+                printf("[ENTRAR IZQUIERDA]: nombre= %s ancho= %ld x inicial= %f destino= %f\n",
+                       s->name, s->width, s->x, s->target_x);
             }
             else if (strcmp(anim_name, "entrar_derecha") == 0)
             {
                 s->x = 640;
                 s->target_x = final_x;
                 s->target_y = s->y;
-                s->speed_x = 2.0f; // px por frame
+                s->speed_x = speed; // px por frame
                 s->speed_y = 0;
+                s->visible = 1;
+                s->animating = 1;
+                s->alpha = 1.0f;
             }
             else if (strcmp(anim_name, "salir_izquierda") == 0)
             {
-                s->target_x = -s->width;
+                s->target_x = -(float)s->width;
                 s->target_y = s->y;
-                s->speed_x = 2.0f; // px por frame
+                s->speed_x = speed; // px por frame
                 s->speed_y = 0;
                 s->visible = 0;
             }
@@ -106,23 +120,43 @@ void start_animation(Scene *scene, const char *sprite_name, const char *anim_nam
             {
                 s->target_x = 640;
                 s->target_y = s->y;
-                s->speed_x = 2.0f; // px por frame
+                s->speed_x = speed; // px por frame
                 s->speed_y = 0;
                 s->visible = 0;
+            }
+            else if (strcmp(anim_name, "traveling_x") == 0)
+            {
+                s->target_x = final_x;
+                s->target_y = final_y;
+                s->speed_x = speed;
+                s->speed_y = 0;
+                s->visible = 1;
+                s->animating = 1;
+                s->alpha = 1.0f;
+            }
+            else if (strcmp(anim_name, "traveling_y") == 0)
+            {
+                s->target_x = final_x;
+                s->target_y = final_y;
+                s->speed_x = 0;
+                s->speed_y = speed;
+                s->visible = 1;
+                s->animating = 1;
+                s->alpha = 1.0f;
             }
             else if (strcmp(anim_name, "subir") == 0)
             {
                 s->target_x = s->x;
                 s->target_y = s->y - 50;
                 s->speed_x = 0; // px por frame
-                s->speed_y = 2.0f;
+                s->speed_y = speed;
             }
             else if (strcmp(anim_name, "bajar") == 0)
             {
                 s->target_x = s->x;
                 s->target_y = s->y + 50;
                 s->speed_x = 0; // px por frame
-                s->speed_y = 2.0f;
+                s->speed_y = speed;
             }
             else if (strcmp(anim_name, "quedarse") == 0)
             {
@@ -158,30 +192,36 @@ void update_animations(Scene *scene, int delta_ms)
     {
         Sprite *s = &scene->sprites[i];
 
-        if (s->x < s->target_x)
+        if (s->animating)
         {
-            s->x += s->speed_x * delta_ms;
-            if (s->x > s->target_x)
-                s->x = s->target_x;
-        }
-        else if (s->x > s->target_x)
-        {
-            s->x -= s->speed_x * delta_ms;
-            if (s->x < s->target_x)
-                s->x = s->target_x;
-        }
+            float dx = s->target_x - s->x;
+            float dy = s->target_y - s->y;
 
-        if (s->y < s->target_y)
-        {
-            s->y += s->speed_y * delta_ms;
-            if (s->y > s->target_y)
+            // Movimiento en X
+            if (fabsf(dx) > fabsf(s->speed_x * delta_ms))
+            {
+                s->x += (dx > 0 ? 1 : -1) * s->speed_x * delta_ms;
+            }
+            else
+            {
+                s->x = s->target_x;
+            }
+
+            // Movimiento en Y
+            if (fabsf(dy) > fabsf(s->speed_y * delta_ms))
+            {
+                s->y += (dy > 0 ? 1 : -1) * s->speed_y * delta_ms;
+            }
+            else
+            {
                 s->y = s->target_y;
-        }
-        else if (s->y > s->target_y)
-        {
-            s->y -= s->speed_y * delta_ms;
-            if (s->y < s->target_y)
-                s->y = s->target_y;
+            }
+
+            // Si llegó al destino
+            if (s->x == s->target_x && s->y == s->target_y)
+            {
+                s->animating = 0;
+            }
         }
         if (s->fading_out)
         {
@@ -280,6 +320,13 @@ void load_script(const char *filename)
             act->music[sizeof(act->music) - 1] = '\0';
         }
 
+        cJSON *video = cJSON_GetObjectItem(item, "video");
+        if (video)
+        {
+            strncpy(act->video, video->valuestring, sizeof(act->video) - 1);
+            act->video[sizeof(act->video) - 1] = '\0';
+        }
+
         cJSON *wait_input = cJSON_GetObjectItem(item, "wait_input");
         if (wait_input)
         {
@@ -298,6 +345,13 @@ void load_script(const char *filename)
         {
             strncpy(act->scene_new, scene_new->valuestring, sizeof(act->scene_new) - 1);
             act->scene_new[sizeof(act->scene_new) - 1] = '\0';
+        }
+
+        cJSON *character_name = cJSON_GetObjectItem(item, "name");
+        if (character_name)
+        {
+            strncpy(act->name, character_name->valuestring, sizeof(act->name) - 1);
+            act->name[sizeof(act->name) - 1] = '\0';
         }
 
         cJSON *text = cJSON_GetObjectItem(item, "text");
@@ -345,6 +399,10 @@ void load_script(const char *filename)
                 v = 255;
             act->volume = (uint8_t)v;
         }
+
+        cJSON *speed_json = cJSON_GetObjectItem(item, "speed");
+        if (speed_json)
+            act->speed = speed_json->valuedouble;
     }
 
     cJSON_Delete(json);
@@ -396,7 +454,8 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
             break;
 
         case ACTION_ANIMATE:
-            start_animation(scene, act->sprite, act->anim, act->x, act->y, delta_ms);
+            float speed = act->speed > 0 ? act->speed : 0;
+            start_animation(scene, act->sprite, act->anim, act->x, act->y, delta_ms, speed);
             break;
 
         case ACTION_SHOW_TEXT:
@@ -416,6 +475,17 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
             scene->chars_displayed = 0;
             scene->line_complete = 0;
             scene->just_started_text = 1;
+            if (act->name[0] != '\0')
+            {
+                strncpy(scene->character_name, act->name, sizeof(scene->character_name) - 1);
+                scene->character_name[sizeof(scene->character_name) - 1] = '\0'; // asegurar terminación
+
+                showName = true;
+            }
+            else
+            {
+                showName = false;
+            }
             break;
 
         case ACTION_PLAY_SOUND:
@@ -440,20 +510,27 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
             audio_stop_music();
             // No incrementes current acá. Dejemos que avance en el siguiente frame.
             break;
+        case ACTION_PLAY_VIDEO:
+            // audio_play_large_sound(act->sound, act->loop);
+            playing_video = 1;
+            printf("[SCRIPT] play_video -> %s (audio: %s)\n", act->video, act->sound);
+            play_video(act->video, act->sound);
+
+            break;
 
         case ACTION_NEXT_SCENE:
             // if (!act->wait_input || button_pressed_edge) {
             strncpy(next_scene_name, act->scene_new, sizeof(next_scene_name));
             next_scene_name[sizeof(next_scene_name) - 1] = '\0'; // seguridad
             start_scene_transition(change_scene_callback, 1000); // 1 segundo
-                                                                 
+
             printf("[SCRIPT] Parando musica en cambio de escena");
             break;
         case ACTION_SPACE:
 
             break;
-            case ACTION_END:
-                end_scene = 1;
+        case ACTION_END:
+            end_scene = 1;
             break;
         }
     }
@@ -542,6 +619,24 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
 
     case ACTION_PLAY_SOUND:
         if (act->time_ms > 0)
+        {
+            // Esperar hasta que pase el tiempo indicado
+            if (current_script.action_timer_ms >= act->time_ms)
+            {
+                current_script.current++;
+                current_script.action_active = 0;
+            }
+        }
+        else
+        {
+            // Si no tiene tiempo definido, avanzar enseguida
+            current_script.current++;
+            current_script.action_active = 0;
+        }
+        break;
+
+    case ACTION_PLAY_VIDEO:
+        if (act->time_ms > 0 || playing_video == 0)
         {
             // Esperar hasta que pase el tiempo indicado
             if (current_script.action_timer_ms >= act->time_ms)

@@ -24,7 +24,7 @@ void play_video(const char *filenameVideo, const char *filenameAudio)
     mpeg = plm_create_with_filename(filenameVideo);
     if (!mpeg)
     {
-        printf("No se pudo abrir intro.mpg\n");
+        printf("[VIDEO_PLAYER] No se pudo abrir el video %s\n", filenameVideo);
         return;
     }
     plm_set_audio_enabled(mpeg, 0); // Audio externo
@@ -119,9 +119,12 @@ void play_video(const char *filenameVideo, const char *filenameAudio)
 void on_video_fadeout_complete()
 {
     printf("on_video_fadeout_complete\n");
-    state = STATE_MENU; // Cambiar al menú
-    menu_active = 1;
-    menu_init(&main_menu);
+    if(state == STATE_VIDEO){
+        state = STATE_MENU; // Cambiar al menú
+        menu_active = 1;
+        menu_init(&main_menu);
+    }
+
     playing_video = 0;
     //  No destruimos video ni textura aquí: lo hacemos en el loop, una vez que el menú empieza a renderizar
 }

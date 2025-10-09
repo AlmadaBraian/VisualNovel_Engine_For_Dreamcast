@@ -166,7 +166,7 @@ void scene_init(Scene *scene)
 
 void scene_add_sprite(const char *name, Scene *scene, pvr_ptr_t tex, float x, float y, float w, float h,
                       uint32 tex_w, uint32 tex_h, float alpha, float alpha_speed,
-                      int fading_out, int fading_in, const char *file, int fondo)
+                      int fading_out, int fading_in, const char *file, int fondo, float scale)
 {
 
     if (scene->sprite_count >= 16)
@@ -197,6 +197,7 @@ void scene_add_sprite(const char *name, Scene *scene, pvr_ptr_t tex, float x, fl
     s->tex_w = tex_w;
     s->tex_h = tex_h;
     s->fondo = fondo;
+    s->scale = scale;
 
     // --- Asignar textura ---
     s->tex = tex;
@@ -323,6 +324,7 @@ void load_scene_from_json(Scene *scene, const char *filename)
             float y = cJSON_GetObjectItem(spr, "y")->valuedouble;
             float w = cJSON_GetObjectItem(spr, "width")->valuedouble;
             float h = cJSON_GetObjectItem(spr, "height")->valuedouble;
+            float scale = cJSON_GetObjectItem(spr, "scale")->valuedouble;
 
             pvr_ptr_t tex = load_png_texture(tex_path, &tex_w, &tex_h, &tex_w, &tex_h);
             if (!tex)
@@ -349,7 +351,7 @@ void load_scene_from_json(Scene *scene, const char *filename)
 
             // --- Agregar sprite a la escena ---
             scene_add_sprite(name, scene, tex, x, y, w, h, tex_w, tex_h,
-                             alpha, alpha_speed, fading_out, fading_in, file, fondo);
+                             alpha, alpha_speed, fading_out, fading_in, file, fondo, scale);
         }
     }
 
@@ -416,7 +418,7 @@ void scene_render(Scene *scene)
         draw_sprite(0, 0, scene->bg_w, scene->bg_h,
                     scene->bg_w, scene->bg_h,
                     next_pow2(scene->bg_w), next_pow2(scene->bg_h),
-                    scene->bg_tex, PVR_LIST_OP_POLY, 1.0f);
+                    scene->bg_tex, PVR_LIST_OP_POLY, 1.0f, 1.0f);
     }
 
     pvr_list_finish();
@@ -424,25 +426,31 @@ void scene_render(Scene *scene)
     // --- Sprites ---
     pvr_list_begin(PVR_LIST_TR_POLY);
     // dibujar todos los sprites
+    // --- Fondos ---
     for (int i = 0; i < scene->sprite_count; i++)
     {
         Sprite *s = &scene->sprites[i];
-        if (s->visible)
+        if (s->visible && s->fondo == 1)
         {
-            if (s->fondo == 0)
-            {
-                draw_sprite(s->x, s->y, s->width, s->height,
-                            s->tex_w, s->tex_h,
-                            next_pow2(s->tex_w), next_pow2(s->tex_h),
-                            s->tex, PVR_LIST_TR_POLY, s->alpha);
-            }
-            else
-            {
-                draw_sprite(s->x, s->y, 640.0f, 480.0f,
-                            s->width, s->height,
-                            next_pow2(s->tex_w), next_pow2(s->tex_h),
-                            s->tex, PVR_LIST_TR_POLY, s->alpha);
-            }
+            draw_sprite(s->x, s->y,
+                        640.0f * s->scale, 480.0f * s->scale,
+                        s->width, s->height,
+                        next_pow2(s->tex_w), next_pow2(s->tex_h),
+                        s->tex, PVR_LIST_TR_POLY, s->alpha, 0.5f); // z = 0
+        }
+    }
+
+    // --- Personajes ---
+    for (int i = 0; i < scene->sprite_count; i++)
+    {
+        Sprite *s = &scene->sprites[i];
+        if (s->visible && s->fondo == 0)
+        {
+            draw_sprite(s->x, s->y,
+                        s->width * s->scale, s->height * s->scale,
+                        s->width, s->height,
+                        next_pow2(s->tex_w), next_pow2(s->tex_h),
+                        s->tex, PVR_LIST_TR_POLY, s->alpha, 1.0f); // z = 0.5
         }
     }
 
@@ -462,6 +470,9 @@ void scene_render(Scene *scene)
         // debug_draw_script(20.0f, 30.0f);
         draw_string(20, 340, buf, len, &len, 1.0f);
     }
+    if(showName){
+        draw_string(20, 280, scene->character_name, 32, NULL, 1.0f);
+    }
     if (showButton)
     {
         draw_sprite_anim(
@@ -470,7 +481,7 @@ void scene_render(Scene *scene)
             7, 8,     // columna/frame = 1, 8 columnas totales
             bt_tex_w, bt_tex_h,
             buttons_tex,
-            0, 4 // fila = 1, total de filas = 4
+            0, 4, 2.0f // fila = 1, total de filas = 4
         );
     }
 

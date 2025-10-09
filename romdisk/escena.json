@@ -10,8 +10,7 @@
       "wait_input": false
     },
     {
-      "time": 1000,
-      "action": "play_sound_L",
+      "action": "play_music",
       "music": "/cd/sound/city.wav",
       "loop": 1,
       "wait_input": false,
@@ -36,8 +35,21 @@
       "wait_input": true,
       "text": [
         "La ciudad de Buenos Aires.",
-        "Una urbe bestial que intimida.\nY mucho más cuando cae la noche.",
-        "Es la primera vez\nque transito sola la ciudad.",
+        "La ciudad de la furia.",
+        "Las luces de los autos,\nlas carteleras de los teatros\nme deslumbran.",
+        "Es la primera vez\nque tengo contacto fisico\ncon la ciudad.",
+        "Buenos Aires me recibe\ncon los brazos abiertos y me dejo poseer\npor la agitada noche.",
+        "Me gustaria poder recorrerla\nen su plenitud.\nPero eso debera esperar a otro dia,\nen otro momento.",
+        "Vuelvo en si de mi trance.",
+        "Si bien hay muchas caras amistosas,\nno debo de confiarme.\nY menos a estas horas de la noche.",
+        "Si bien estoy caminando por\nuna de las zonas más seguras\nde la ciudad...",
+        "No es buena idea confiarse.",
+        "...",
+        "A lo lejos, veo un grupo\nde tres jovenes hablando.",
+        "No se porque, pero siento\nque estan hablando de mi.",
+        "Miran hacia donde estoy.\nUno de ellos hace un gesto.",
+        "¿Acaso sera esto? ¿Me han marcado?\nMe asaltaran, me violaran, me mataran,\ny abandonaran mi cuerpo\na su suerte en una zanja.",
+        "No, no quiero.\nMi primer dia de trabajo\nno deberia terminar asi.",
         "Agarro mi cartera con fuerza\ny acelero mi paso hasta llegar\na la estacion de subte."
       ]
     },
@@ -71,11 +83,16 @@
       "volume": 255
     },
     {
-      "time": 2000,
+      "time": 1000,
       "action": "show_sprite",
       "sprite": "EstacionSubte",
       "x": 0,
       "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 500,
+      "action": "stop_music",
       "wait_input": false
     },
     {
@@ -88,23 +105,21 @@
       "wait_input": false
     },
     {
-      "time": 1000,
-      "action": "stop_music",
-      "wait_input": false
-    },
-    {
       "action": "show_text",
       "wait_input": true,
       "text": [
         "Bajo las escaleras, paso la sube\ny ya estoy dentro.",
         "Mi corazon va a mil.",
         "Estoy un poco nerviosa,\nme sudan las manos.",
+        "Al parecer,\nesos jovenes no me siguieron.",
+        "¿Sera que los nervios\nme estan volviendo paranoica?",
+        "...",
+        "Me tranquilizo.\nRecuerdo que debo llegar presentable\na mi primer dia de trabajo.",
         "Mi hermano, Anibal,\nse esforzo mucho para\nconseguirme este trabajo.",
         "El conoce a alguien de recursos humanos,\nme consiguio un puesto, como seguridad\ndel edificio donde trabaja.",
         "La plata me estaba\nhaciendo mucha falta.\nAsi que no tuve más opcion\nque aceptar.",
         "No puedo más de los nervios,\nme sudan las manos.\nSiento un fuerte apreton\nen el estomago.",
-        "Tranquila Erika,\ntodo va a estar bien.",
-        "El subte finalmente llega\ny se detiene frente a mi."
+        "Tranquila Erika,\ntodo va a estar bien."
       ]
     },
     {
@@ -116,11 +131,27 @@
       ]
     },
     {
-      "time": 20000,
+      "time": 10000,
       "action": "play_sound_L",
       "sound": "/cd/sound/subte_llega.wav",
       "wait_input": false,
       "volume": 255
+    },
+    {
+      "time": 1000,
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "El subte finalmente llega\ny se detiene frente a mi."
+      ]
+    },
+    {
+      "time": 500,
+      "action": "show_text",
+      "wait_input": false,
+      "text": [
+        ""
+      ]
     },
     {
       "time": 2000,
@@ -157,6 +188,14 @@
     },
     {
       "time": 500,
+      "action": "show_sprite",
+      "sprite": "linea-a-subte",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 500,
       "action": "show_text",
       "wait_input": false,
       "text": [
@@ -168,14 +207,6 @@
       "action": "animate",
       "sprite": "subte",
       "anim": "fade_out",
-      "x": 0,
-      "y": 0,
-      "wait_input": false
-    },
-    {
-      "time": 2000,
-      "action": "show_sprite",
-      "sprite": "linea-a-subte",
       "x": 0,
       "y": 0,
       "wait_input": false
@@ -220,7 +251,67 @@
       "x": 0,
       "y": 0,
       "wait_input": false
+    },
+    {
+      "time": 500,
+      "action": "show_sprite",
+      "sprite": "oficina_ext",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 500,
+      "action": "animate",
+      "sprite": "oficina_ext",
+      "anim": "fade_in",
+      "x": -300,
+      "y": 0,
+      "wait_input": false
+    },
+        {
+      "time": 4000,
+      "action": "animate",
+      "sprite": "oficina_ext",
+      "anim": "traveling_y",
+      "x": -300,
+      "y": -200,
+      "speed": 0.05,
+      "wait_input": false
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "Llego a la entrada del edificio."
+      ]
+    },
+    {
+      "time": 500,
+      "action": "animate",
+      "sprite": "Abril",
+      "anim": "entrar_izquierda",
+      "x": 10,
+      "y": 20,
+      "speed": 1,
+      "wait_input": false
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "En la entrada, me encuentro con Abril..\nLa gerente de recursos humanos."
+      ]
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "name":"Abril",
+      "text": [
+        "Hola querida, ¿Como Andas?"
+      ]
     }
+
   ],
   "background": "",
   "sprites": [
@@ -232,7 +323,8 @@
       "height": 212,
       "name": "BuenosAiresNoche",
       "alpha": 0,
-      "fondo": 1
+      "fondo": 1,
+      "scale": 1
     },
     {
       "texture": "/cd/png/EstacionSubte.png",
@@ -242,7 +334,8 @@
       "height": 185,
       "name": "EstacionSubte",
       "alpha": 0,
-      "fondo": 1
+      "fondo": 1,
+      "scale": 1
     },
     {
       "texture": "/cd/png/linea-a-subte.png",
@@ -252,7 +345,8 @@
       "height": 371,
       "name": "linea-a-subte",
       "alpha": 0,
-      "fondo": 1
+      "fondo": 1,
+      "scale": 1
     },
     {
       "texture": "/cd/png/subte.png",
@@ -262,7 +356,30 @@
       "height": 263,
       "name": "subte",
       "alpha": 0,
-      "fondo": 1
+      "fondo": 1,
+      "scale": 1
+    },
+    {
+      "texture": "/cd/png/oficina_ext.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512,
+      "name": "oficina_ext",
+      "alpha": 0,
+      "fondo": 1,
+      "scale": 1.5
+    },
+    {
+      "texture": "/cd/png/Abril_abrigo.png",
+      "x": 0,
+      "y": 0,
+      "width": 270,
+      "height": 480,
+      "name": "Abril",
+      "alpha": 0,
+      "fondo": 0,
+      "scale": 1.2
     }
   ],
   "lines": [

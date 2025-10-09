@@ -21,6 +21,7 @@ typedef struct {
 	int fading_in;       // flag si está desvaneciéndose
     char file[128];   // archivo PNG asociado
     int fondo;
+    float scale;
 } Sprite;
 
 typedef struct {
@@ -43,7 +44,7 @@ pvr_ptr_t load_png_texture(const char *filename, uint32 *w, uint32 *h, uint32 *t
 void draw_sprite(float x, float y, float w, float h,
                  uint32 src_w, uint32 src_h,
                  uint32 tex_w, uint32 tex_h,
-                 pvr_ptr_t tex, int list, float alpha);
+                 pvr_ptr_t tex, int list, float alpha, float capa);
 pvr_ptr_t create_black_texture(uint32 *w, uint32 *h);
 
 void sprite_load_texture(Sprite *s, const char *file);
@@ -52,7 +53,7 @@ void sprite_free_texture(Sprite *s);
 
 void draw_sprite_anim(float x, float y, float draw_w, float draw_h,
                       int frame, int frames_per_row, uint32 tex_w, uint32 tex_h,
-                      pvr_ptr_t tex, int row, int total_rows);
+                      pvr_ptr_t tex, int row, int total_rows, float capa);
 
 
 #endif

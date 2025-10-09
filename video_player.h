@@ -10,7 +10,7 @@
 #define VIDEO_W 256
 #define VIDEO_H 128
 #define SCREEN_W 640
-#define SCREEN_H 480
+#define SCREEN_H 380
 #define UV_EPSILON 0.001f
 
 /* Variables que están DEFINIDAS en main.c (declaralas como extern aquí) */
