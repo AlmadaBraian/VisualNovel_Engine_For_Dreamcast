@@ -49,8 +49,55 @@ pvr_ptr_t load_png_texture(const char *filename, uint32 *w, uint32 *h, uint32 *t
     return tex;
 }
 
+void draw_sprite_anim(float x, float y, float draw_w, float draw_h,
+                      int frame, int frames_per_row, uint32 tex_w, uint32 tex_h,
+                      pvr_ptr_t tex, int row, int total_rows, float capa)
+{
+    pvr_poly_cxt_t cxt;
+    pvr_poly_hdr_t hdr;
+    pvr_vertex_t vert;
+
+    // Si tu PNG tiene alpha, mantené ARGB4444; si no, usá RGB565.
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444 | PVR_TXRFMT_NONTWIDDLED,
+                     tex_w, tex_h, tex, PVR_FILTER_BILINEAR);
+    pvr_poly_compile(&hdr, &cxt);
+    pvr_prim(&hdr, sizeof(hdr));
+
+    // Cálculo correcto de UVs
+    float frame_w = (float)tex_w / frames_per_row;
+    float frame_h = (float)tex_h / total_rows;
+
+    float u_per_frame = frame_w / tex_w;
+    float v_per_row   = frame_h / tex_h;
+
+    float u_start = frame * u_per_frame;
+    float u_end   = u_start + u_per_frame;
+    float v_start = row * v_per_row;
+    float v_end   = v_start + v_per_row;
+
+    vert.argb = 0xffffffff;
+    vert.oargb = 0;
+    vert.flags = PVR_CMD_VERTEX;
+
+    vert.x = x;         vert.y = y;          vert.z = capa; vert.u = u_start; vert.v = v_start; pvr_prim(&vert, sizeof(vert));
+    vert.x = x+draw_w;  vert.y = y;                        vert.u = u_end;   vert.v = v_start; pvr_prim(&vert, sizeof(vert));
+    vert.x = x;         vert.y = y+draw_h;                 vert.u = u_start; vert.v = v_end;   pvr_prim(&vert, sizeof(vert));
+    vert.flags = PVR_CMD_VERTEX_EOL;
+    vert.x = x+draw_w;  vert.y = y+draw_h;                 vert.u = u_end;   vert.v = v_end;   pvr_prim(&vert, sizeof(vert));
+}
+
+// --- Colisiones AABB ---
+int aabb_overlap(float x1, float y1, float w1, float h1,
+                 float x2, float y2, float w2, float h2) {
+    if (x1 + w1 <= x2) return 0;
+    if (x1 >= x2 + w2) return 0;
+    if (y1 + h1 <= y2) return 0;
+    if (y1 >= y2 + h2) return 0;
+    return 1;
+}
+
 // --- Dibujar sprite rectangular ---
-void draw_sprite(float x, float y, float w, float h, uint32 sprite_w, uint32 sprite_h, uint32 tex_w, uint32 tex_h, pvr_ptr_t tex, int list, float alpha)
+void draw_sprite(float x, float y, float w, float h, uint32 sprite_w, uint32 sprite_h, uint32 tex_w, uint32 tex_h, pvr_ptr_t tex, int list, float alpha, float capa)
 {
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t hdr;
@@ -73,7 +120,7 @@ void draw_sprite(float x, float y, float w, float h, uint32 sprite_w, uint32 spr
     vert.oargb = 0;
     vert.flags = PVR_CMD_VERTEX;
 
-    vert.x = x; vert.y = y; vert.z = 1.0f; vert.u = 0; vert.v = 0; pvr_prim(&vert, sizeof(vert));
+    vert.x = x; vert.y = y; vert.z = capa; vert.u = 0; vert.v = 0; pvr_prim(&vert, sizeof(vert));
     vert.x = x + w; vert.y = y; vert.u = u1; vert.v = 0; pvr_prim(&vert, sizeof(vert));
     vert.x = x; vert.y = y + h; vert.u = 0; vert.v = v1; pvr_prim(&vert, sizeof(vert));
     vert.flags = PVR_CMD_VERTEX_EOL;

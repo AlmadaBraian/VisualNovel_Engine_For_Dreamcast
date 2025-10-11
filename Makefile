@@ -1,24 +1,26 @@
-KOS_BASE ?= C:/DreamSDK2025/opt/toolchains/dc/kos
+KOS_BASE ?= C:/DreamSDK2025/DreamSDK/opt/toolchains/dc/kos
 KOSLIB = $(KOS_BASE)/lib/dreamcast
 MPEG_DIR = pl_mpegDC-master
 
 CC = kos-cc
 LD = kos-cc
-CFLAGS = -O2 -Wall -g -I. -Ipl_mpegDC-master -Ipl_mpegDC-master/bleedingedge/ -DKOS
+CFLAGS = -O0 -Wall -g -I. -Ipl_mpegDC-master -Ipl_mpegDC-master/bleedingedge/ -DKOS
 
 # Objetos
-OBJS = $(SRCS:.c=.o) main.o font.o sprite.o wfont.o wfont_widths.o scene.o script.o cJSON.o audio.o menu.o romdisk.o
+OBJS = $(SRCS:.c=.o) main.o font.o sprite.o wfont.o wfont_widths.o scene.o script.o cJSON.o audio.o menu.o video_player.o romdisk.o
 
 # Archivo final
 TARGET = juego.elf
 KOS_ROMDISK_DIR = romdisk
 
 MUSIC_DIR = music
+SOUND_DIR = sound
+VIDEO_DIR = video
 FRAMES_DIR = frames_kmg
 PNG_DIR = png
 CD_DIR = cd
 CD_ROOT = cd_root
-GAME_NAME = "Motor Novela Visual"
+GAME_NAME = "Enlace_Nocturno_v0.06"
 GAME_AUTHOR = "La Bacha Soft"
 CDI_FILE = $(GAME_NAME).cdi
 
@@ -43,16 +45,19 @@ rm-elf:
 
 # Compilar ELF
 $(TARGET): $(OBJS)
-	$(LD)  -o $(TARGET) $(OBJS) -L$(KOSLIB) -lkallisti -lkosutils -lkmg -lpng -lz -lm -lc -lgcc -lwav
+	$(LD)  -o $(TARGET) $(OBJS) -L$(KOSLIB) -lkallisti -lkosutils -lkmg -lpng -lz -lm -lc -lgcc -lwav -lkallisti
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 # Reglas de compilación de los .o
-main.o: main.c font.h sprite.h scene.h script.h audio.h menu.h pl_mpeg.h
+main.o: main.c font.h sprite.h scene.h script.h audio.h menu.h video_player.h
 	$(CC) $(CFLAGS) -c main.c
 	
 sprite.o: sprite.c sprite.h
 	$(CC) $(CFLAGS) -c sprite.c
+
+video_player.o: video_player.c video_player.h pl_mpeg.h
+	$(CC) $(CFLAGS) -c video_player.c
 
 font.o: font.c font.h sprite.h
 	$(CC) $(CFLAGS) -c font.c
@@ -60,7 +65,7 @@ font.o: font.c font.h sprite.h
 scene.o: scene.c scene.h cJSON.h
 	$(CC) $(CFLAGS) -c scene.c
 	
-script.o: script.c script.h cJSON.h scene.h audio.h 
+script.o: script.c script.h cJSON.h scene.h audio.h video_player.h
 	$(CC) $(CFLAGS) -c script.c
 	
 cJSON.o: cJSON.c cJSON.h
@@ -100,19 +105,18 @@ scramble: $(TARGET:.elf=.bin)
 	mkdir -p $(CD_ROOT)
 	scramble $(TARGET:.elf=.bin) $(CD_ROOT)/1ST_READ.BIN
 
-
-# --- Crear IP.BIN ---
-makeip: 
-	cd $(CD_ROOT) && makeip -g "Motor Novela visual" -c "La Bacha Soft" -f IP.BIN
-
 # --- Copiar ELF y recursos a cd_root ---
 copy-resources: $(TARGET)
 	@echo "Copiando recursos a $(CD_ROOT)..."
 	mkdir -p $(CD_ROOT)/data
 	mkdir -p $(CD_ROOT)/music
+	mkdir -p $(CD_ROOT)/video
 	mkdir -p $(CD_ROOT)/png
+	mkdir -p $(CD_ROOT)/sound
 	cp $(TARGET) $(CD_ROOT)/data/
 	cp -u $(MUSIC_DIR)/*.wav $(CD_ROOT)/music || true
+	cp -ur $(VIDEO_DIR)/* $(CD_ROOT)/video || true
+	cp -u $(SOUND_DIR)/*.wav $(CD_ROOT)/sound || true
 	cp -u $(PNG_DIR)/*.png $(CD_ROOT)/png || true
 	cp -u $(KOS_ROMDISK_DIR).o $(CD_ROOT)/data/
 
@@ -128,6 +132,8 @@ cdi:
 		-e $(CD_ROOT)/data/$(TARGET) \
 		-p $(CD_ROOT)/IP.BIN \
 		-d $(CD_ROOT)/music \
+		-d $(CD_ROOT)/video \
+		-d $(CD_ROOT)/sound \
 		-d $(CD_ROOT)/png \
 		-f $(CD_ROOT)/video_audio.wav \
 		-f $(CD_ROOT)/intro.mpg \

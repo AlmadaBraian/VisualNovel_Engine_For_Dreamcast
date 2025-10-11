@@ -75,6 +75,23 @@ void audio_play_sound(const char *filename) {
         snd_sfx_play(sound_file_move, sound_volume, CENTER);
     } else if (strcmp(filename, "acept") == 0){
         snd_sfx_play(sound_file_acept, sound_volume, CENTER);
+    }else{
+        sfxhnd_t sound = snd_sfx_load(filename);
+        snd_sfx_play(sound, sound_volume, CENTER);
+    }
+}
+
+void audio_play_large_sound(const char *filename, int loop) {
+    if (!filename) return;
+    static wav_stream_hnd_t large_sound = -1;
+    // Crear nuevo stream
+    large_sound = wav_create(filename, loop ? LOOP : 0);
+    if (large_sound >= 0) {
+        printf("Reproduciendo sonido: %s\n", filename);
+		wav_volume(large_sound, sound_volume);
+        wav_play(large_sound);
+    } else {
+        printf("Error: no se pudo crear handle para %s\n", filename);
     }
 }
 

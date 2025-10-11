@@ -4,6 +4,7 @@
         "stdio.h": "c",
         "string.h": "c",
         "video_player.h": "c",
-        "pl_mpeg.h": "c"
+        "pl_mpeg.h": "c",
+        "audio.h": "c"
     }
 }

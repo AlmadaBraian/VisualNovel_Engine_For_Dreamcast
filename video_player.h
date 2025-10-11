@@ -1,54 +1,37 @@
-// video_player.h
 #ifndef VIDEO_PLAYER_H
 #define VIDEO_PLAYER_H
 
 #include <kos.h>
-#include <kos/thread.h>
-#include <kos/sem.h>
+#include "menu.h"
+#include "mpegDC.h" // sólo la cabecera, la implementación debe estar en un único .c
 
 #define MAX_PATH_LEN 256
 
-typedef struct {
-    kthread_t *loader_thread;
-    semaphore_t load_semaphore;
-    semaphore_t load_complete;
+#define VIDEO_W 256
+#define VIDEO_H 128
+#define SCREEN_W 640
+#define SCREEN_H 380
+#define UV_EPSILON 0.001f
 
-    pvr_ptr_t next_tex;
-    uint32 next_w, next_h;
-    uint32 next_tex_w, next_tex_h;
-    char file_to_load[256];
-    int frame_to_load;
-    int loading;
-    kos_img_t staged_img;
-    volatile int staged_ready;
-} VideoLoader;
+/* Variables que están DEFINIDAS en main.c (declaralas como extern aquí) */
+extern int video_width;
+extern int video_height;
+extern int state;
+extern Menu main_menu;
+extern int menu_active;
+extern int playing_video;
+extern int video_destroyed;
+extern plm_t *mpeg;
+extern pvr_vertex_t vert[4];
+extern pvr_ptr_t video_tex;
 
-typedef struct {
-    int fps;
-    int frame_count;
-    int current_frame;
-    int finished;
-    int frame_duration_ms;
-    uint32 start_time_ms;
+/* Variables PVR */
+extern pvr_poly_cxt_t cxt;
+extern pvr_poly_hdr_t hdr;
 
-    char path[MAX_PATH_LEN];
+void play_video(const char *filenameVideo, const char *filenameAudio);
+void on_video_fadeout_complete(void);
+void yuv420_to_yuv422(plm_frame_t *frame, uint16_t *vram);
+void render_video_frame(plm_frame_t *video_frame);
 
-    pvr_ptr_t tex;
-    uint32 w, h;
-    uint32 tex_w, tex_h;
-
-    VideoLoader loader;
-} VideoPlayer;
-
-void video_init(VideoPlayer *vp, const char *path, int frame_count, int fps, const char *audio_file);
-void video_update(VideoPlayer *vp);
-void video_draw(VideoPlayer *vp);
-void video_shutdown(VideoPlayer *vp);
-
-pvr_ptr_t video_load_texture(const char *filename, uint32 *w, uint32 *h, uint32 *tex_w, uint32 *tex_h);
-void video_draw_sprite(float x, float y, float w, float h, uint32 tex_w, uint32 tex_h, pvr_ptr_t tex, int list, float alpha);
-
-void video_request_load(VideoPlayer *vp, int frame_num);
-pvr_ptr_t video_load_kmg(const char *filename, uint32 *w, uint32 *h, uint32 *tex_w, uint32 *tex_h);
-
-#endif
+#endif /* VIDEO_PLAYER_H */
