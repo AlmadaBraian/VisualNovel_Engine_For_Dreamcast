@@ -1,67 +1,120 @@
 {
-	"scene": "parque",
+	"scene": "Edificio exterior",
   "script": [
-  {
-  "time": 0,
-  "action": "show_sprite",
-  "sprite": "Marisa",
-  "x": -480,
-  "y": 10,
-  "wait_input": false
-},
-
-{
-  "time": 500,
-  "action": "animate",
-  "sprite": "Marisa",
-  "anim":  "entrar_izquierda",
-  "x": -100,
-  "y": 10,
-  "wait_input": false
-},
-  
-{
-  "action": "show_text",
-  "wait_input": true,
-  "text": [
-    "Marisa logro escapar de la lujuria\nlactosa de Martín."
-  ]
-},
-{"time": 3000,
-  "action": "animate",
-  "sprite": "Marisa",
-  "anim":  "fade_out",
-  "wait_input": false
-},
-{
-  "time": 0,
-  "action": "show_text",
-  "wait_input": true,
-  "text": [
-    ""
-  ]
-}
+ {
+      "time": 500,
+      "action": "show_sprite",
+      "sprite": "oficina_ext",
+      "x": 0,
+      "y": 0,
+      "wait_input": false
+    },
+    {
+      "time": 500,
+      "action": "animate",
+      "sprite": "oficina_ext",
+      "anim": "fade_in",
+      "x": -300,
+      "y": 0,
+      "wait_input": false
+    },
+        {
+      "time": 4000,
+      "action": "animate",
+      "sprite": "oficina_ext",
+      "anim": "traveling_y",
+      "x": -300,
+      "y": -200,
+      "speed": 0.05,
+      "wait_input": false
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "Llego a la entrada del edificio."
+      ]
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "En la entrada, me encuentro con Abril..\nLa gerente de recursos humanos."
+      ]
+    },
+    {
+      "time": 500,
+      "action": "animate",
+      "sprite": "Abril",
+      "anim": "entrar_izquierda",
+      "x": 10,
+      "y": 100,
+      "speed": 1,
+      "wait_input": false
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "name":"Abril",
+      "text": [
+        "Hola querida.\n¿Como Andas?",
+        "¿Como estuvo el viaje?"
+      ]
+    },
+    {
+      "time": 500,
+      "action": "animate",
+      "sprite": "Erika",
+      "anim": "entrar_derecha",
+      "x": 300,
+      "y": 60,
+      "speed": 1,
+      "wait_input": false
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "name":"Erika",
+      "text": [
+        "Bien, por suerte es bastante\ndirecto desde casa hasta acá."
+      ]
+    }
 
   ],
-  "background": "/cd/png/obstaculo.png",
+  "background": "",
   "sprites": [
-    {
-      "texture": "/cd/png/Marisa.png",
-      "x": -480,
-      "y": 10,
-      "width": 480,
-      "height": 480,
-	  "name": "Marisa",
-	  "alpha": 1
+        {
+      "texture": "/cd/png/oficina_ext.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512,
+      "name": "oficina_ext",
+      "alpha": 0,
+      "fondo": 1,
+      "scale": 1.5
     },
-	{
-      "texture": "/cd/png/Martin.png",
-      "x": -480,
-      "y": 10,
-      "width": 480,
+    {
+      "texture": "/cd/png/Abril_abrigo.png",
+      "x": 0,
+      "y": 0,
+      "width": 270,
       "height": 480,
-	  "name": "Martin",
-	  "alpha": 1
+      "name": "Abril",
+      "alpha": 0,
+      "fondo": 0,
+      "scale": 1
+    },
+    {
+      "texture": "/cd/png/Erika.png",
+      "x": 0,
+      "y": 0,
+      "width": 270,
+      "height": 480,
+      "name": "Erika",
+      "alpha": 0,
+      "fondo": 0,
+      "scale": 1.2
     }
   ],
   "lines": [

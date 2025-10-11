@@ -86,6 +86,7 @@ void start_animation(Scene *scene, const char *sprite_name, const char *anim_nam
             {
                 float ancho = (float)(int)s->width;
                 s->x = -ancho;
+                s->y = final_y;
                 s->target_x = final_x;
                 s->target_y = s->y;
                 s->speed_x = speed;
@@ -100,6 +101,7 @@ void start_animation(Scene *scene, const char *sprite_name, const char *anim_nam
             else if (strcmp(anim_name, "entrar_derecha") == 0)
             {
                 s->x = 640;
+                s->y = final_y;
                 s->target_x = final_x;
                 s->target_y = s->y;
                 s->speed_x = speed; // px por frame
@@ -421,6 +423,9 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
 
     ScriptAction *act = &current_script.actions[current_script.current];
 
+     //printf("[SCRIPT] current=%d, action_active=%d, tipo=%d\n",
+       //    current_script.current, current_script.action_active, act->type);
+
     // Si no hay acción activa, activamos la siguiente
     if (!current_script.action_active)
     {
@@ -520,11 +525,12 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
 
         case ACTION_NEXT_SCENE:
             // if (!act->wait_input || button_pressed_edge) {
+            draw_loading_screen = false;
             strncpy(next_scene_name, act->scene_new, sizeof(next_scene_name));
             next_scene_name[sizeof(next_scene_name) - 1] = '\0'; // seguridad
             start_scene_transition(change_scene_callback, 1000); // 1 segundo
 
-            printf("[SCRIPT] Parando musica en cambio de escena");
+            printf("[SCRIPT]cambio de escena");
             break;
         case ACTION_SPACE:
 
@@ -636,13 +642,20 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
         break;
 
     case ACTION_PLAY_VIDEO:
-        if (act->time_ms > 0 || playing_video == 0)
+        if (act->time_ms > 0)
         {
             // Esperar hasta que pase el tiempo indicado
-            if (current_script.action_timer_ms >= act->time_ms)
+            if (current_script.action_timer_ms >= act->time_ms || playing_video == 0)
             {
                 current_script.current++;
                 current_script.action_active = 0;
+                if (!video_destroyed)
+            {
+                plm_destroy(mpeg);
+                pvr_mem_free(video_tex);
+                video_destroyed = 1;
+                printf("Destruimos el video y liberamos memoria...\n");
+            }
             }
         }
         else
@@ -706,6 +719,11 @@ void script_update(Scene *scene, int delta_ms, int button_pressed)
             current_script.current++;
             current_script.action_active = 0;
         }
+        break;
+
+        case ACTION_NEXT_SCENE:
+        current_script.current++;
+        current_script.action_active = 0;
         break;
 
     default:

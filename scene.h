@@ -18,6 +18,7 @@ extern int current_scene;
 extern pvr_ptr_t buttons_tex;
 extern uint32 bt_tex_w, bt_tex_h;
 extern bool draw_text_box;
+extern bool draw_loading_screen;
 
 typedef struct
 {

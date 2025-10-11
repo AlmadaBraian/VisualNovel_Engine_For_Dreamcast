@@ -137,7 +137,7 @@ void render_video_frame(plm_frame_t *video_frame)
     pvr_prim(&hdr, sizeof(hdr));
 
     vert[0].x = 0;
-    vert[0].y = 0;
+    vert[0].y = 50;
     vert[0].z = 1;
     vert[0].u = 0.0f;
     vert[0].v = 0.0f;
@@ -145,7 +145,7 @@ void render_video_frame(plm_frame_t *video_frame)
     vert[0].flags = PVR_CMD_VERTEX;
 
     vert[1].x = SCREEN_W;
-    vert[1].y = 0;
+    vert[1].y = 50;
     vert[1].z = 1;
     vert[1].u = 1.0f;
     vert[1].v = 0.0f;
@@ -153,7 +153,7 @@ void render_video_frame(plm_frame_t *video_frame)
     vert[1].flags = PVR_CMD_VERTEX;
 
     vert[2].x = 0;
-    vert[2].y = SCREEN_H;
+    vert[2].y = SCREEN_H + 50;
     vert[2].z = 1;
     vert[2].u = 0.0f;
     vert[2].v = 1.0f;
@@ -161,7 +161,7 @@ void render_video_frame(plm_frame_t *video_frame)
     vert[2].flags = PVR_CMD_VERTEX;
 
     vert[3].x = SCREEN_W;
-    vert[3].y = SCREEN_H;
+    vert[3].y = SCREEN_H + 50;
     vert[3].z = 1;
     vert[3].u = 1.0f;
     vert[3].v = 1.0f;

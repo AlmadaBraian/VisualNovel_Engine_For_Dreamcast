@@ -1,10 +1,10 @@
-KOS_BASE ?= C:/DreamSDK2025/opt/toolchains/dc/kos
+KOS_BASE ?= C:/DreamSDK2025/DreamSDK/opt/toolchains/dc/kos
 KOSLIB = $(KOS_BASE)/lib/dreamcast
 MPEG_DIR = pl_mpegDC-master
 
 CC = kos-cc
 LD = kos-cc
-CFLAGS = -O2 -Wall -g -I. -Ipl_mpegDC-master -Ipl_mpegDC-master/bleedingedge/ -DKOS
+CFLAGS = -O0 -Wall -g -I. -Ipl_mpegDC-master -Ipl_mpegDC-master/bleedingedge/ -DKOS
 
 # Objetos
 OBJS = $(SRCS:.c=.o) main.o font.o sprite.o wfont.o wfont_widths.o scene.o script.o cJSON.o audio.o menu.o video_player.o romdisk.o
@@ -20,7 +20,7 @@ FRAMES_DIR = frames_kmg
 PNG_DIR = png
 CD_DIR = cd
 CD_ROOT = cd_root
-GAME_NAME = "Enlace Nocturno v0.06"
+GAME_NAME = "Enlace_Nocturno_v0.06"
 GAME_AUTHOR = "La Bacha Soft"
 CDI_FILE = $(GAME_NAME).cdi
 
@@ -45,7 +45,7 @@ rm-elf:
 
 # Compilar ELF
 $(TARGET): $(OBJS)
-	$(LD)  -o $(TARGET) $(OBJS) -L$(KOSLIB) -lkallisti -lkosutils -lkmg -lpng -lz -lm -lc -lgcc -lwav
+	$(LD)  -o $(TARGET) $(OBJS) -L$(KOSLIB) -lkallisti -lkosutils -lkmg -lpng -lz -lm -lc -lgcc -lwav -lkallisti
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

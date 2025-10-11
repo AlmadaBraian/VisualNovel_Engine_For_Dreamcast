@@ -244,7 +244,7 @@
       "volume": 255
     },
     {
-      "time": 3000,
+      "time": 500,
       "action": "animate",
       "sprite": "linea-a-subte",
       "anim": "fade_out",
@@ -253,65 +253,10 @@
       "wait_input": false
     },
     {
-      "time": 500,
-      "action": "show_sprite",
-      "sprite": "oficina_ext",
-      "x": 0,
-      "y": 0,
+      "action": "next_scene",
+      "scene_new": "/rd/escena2.json",
       "wait_input": false
-    },
-    {
-      "time": 500,
-      "action": "animate",
-      "sprite": "oficina_ext",
-      "anim": "fade_in",
-      "x": -300,
-      "y": 0,
-      "wait_input": false
-    },
-        {
-      "time": 4000,
-      "action": "animate",
-      "sprite": "oficina_ext",
-      "anim": "traveling_y",
-      "x": -300,
-      "y": -200,
-      "speed": 0.05,
-      "wait_input": false
-    },
-    {
-      "action": "show_text",
-      "wait_input": true,
-      "text": [
-        "Llego a la entrada del edificio."
-      ]
-    },
-    {
-      "time": 500,
-      "action": "animate",
-      "sprite": "Abril",
-      "anim": "entrar_izquierda",
-      "x": 10,
-      "y": 20,
-      "speed": 1,
-      "wait_input": false
-    },
-    {
-      "action": "show_text",
-      "wait_input": true,
-      "text": [
-        "En la entrada, me encuentro con Abril..\nLa gerente de recursos humanos."
-      ]
-    },
-    {
-      "action": "show_text",
-      "wait_input": true,
-      "name":"Abril",
-      "text": [
-        "Hola querida, ¿Como Andas?"
-      ]
     }
-
   ],
   "background": "",
   "sprites": [
@@ -358,28 +303,6 @@
       "alpha": 0,
       "fondo": 1,
       "scale": 1
-    },
-    {
-      "texture": "/cd/png/oficina_ext.png",
-      "x": 0,
-      "y": 0,
-      "width": 512,
-      "height": 512,
-      "name": "oficina_ext",
-      "alpha": 0,
-      "fondo": 1,
-      "scale": 1.5
-    },
-    {
-      "texture": "/cd/png/Abril_abrigo.png",
-      "x": 0,
-      "y": 0,
-      "width": 270,
-      "height": 480,
-      "name": "Abril",
-      "alpha": 0,
-      "fondo": 0,
-      "scale": 1.2
     }
   ],
   "lines": [

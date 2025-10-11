@@ -14,28 +14,96 @@ int scene_count = 0;
 SceneTransition g_transition = {0};
 FadeState g_fade;
 bool draw_text_box = false;
+bool draw_loading_screen = false;
 
 uint32 w_fuente = 512;
 uint32 h_fuente = 372;
 pvr_ptr_t tex_font;
+float progreso = 0;
 
 // --- Escenario ---
 Block textBox = {0.0f, 300.0f, 640.0f, 200.0f};
 
 static inline int min(int a, int b) { return (a < b) ? a : b; }
 
+void show_loading_screen()
+{
+    Block negro = {0.0f, 0.0f, 640.0f, 480.0f};
+    Block barra_fondo = {100, 400, 440, 20};         // fondo de la barra
+    Block barra_progreso = {100, 400, progreso, 20}; // ancho inicial = 0
+    pvr_wait_ready();
+    pvr_scene_begin();
+    pvr_list_begin(PVR_LIST_TR_POLY);
+
+    // 🔹 Dibujar un fondo negro
+    draw_block(&negro, 0xFF000000);
+    // Fondo de la barra
+    draw_block(&barra_fondo, 0xFF555555);
+
+    // Barra de progreso
+    draw_block(&barra_progreso, 0xFF00FF00);
+
+    // 🔹 (Opcional) Si tenés una textura de "loading", la cargás temporalmente:
+    // uint32 tw, th;
+    // pvr_ptr_t tex = load_png_texture("/rd/png/loading.png", &tw, &th, &tw, &th);
+    // draw_sprite_fullscreen(tex, tw, th);
+
+    // 🔹 (Opcional) texto simple
+    draw_string(120, 240, "CARGANDO.....", 32, NULL, 1.0f);
+    printf("Progreso %f\n", progreso);
+    pvr_list_finish();
+    pvr_scene_finish();
+
+    // Forzar a que se dibuje antes de comenzar la carga real
+    pvr_wait_ready();
+}
+
 void change_scene(const char *filename)
 {
-    // 1. Limpiar escena actual
+    float progreso_int = 440.0f * 0.1f;
+    progreso = 440.0f * 0.1f;
+    // 1. Mostrar pantalla de carga (antes de borrar la escena actual)
+    if (draw_loading_screen)
+    {
+        show_loading_screen();
+    }
+
+    // 2. Limpiar escena actual
     scene_clear(&scenes[current_scene]);
 
-    // 2. Cargar nueva escena (fondo + sprites + líneas)
+    if (draw_loading_screen)
+    {
+        progreso = 440.0f * 0.25f;
+        progreso_int = 440.0f * 0.3f;
+        printf("scene_clear\n");
+        for (size_t i = progreso; i < progreso_int; i++)
+        {
+            progreso = i;
+            show_loading_screen();
+        }
+    }
+
+    // 3. Cargar nueva escena (fondo + sprites + líneas)
     load_scene_with_textures(&scenes[current_scene], filename);
 
-    // 3. Cargar nuevo script
+    // 4. Cargar nuevo script
     load_script(filename);
 
-    // 4. Reiniciar script
+    if (draw_loading_screen)
+    {
+        printf("load_script\n");
+        progreso_int = 440.0f;
+        float restante = progreso_int - progreso; 
+        float equivalencia = restante/5;
+        for (float i = progreso; i < progreso_int; i+=equivalencia)
+        {
+            printf("load_script i= %f\nprogreso_int = %f\nprogreso = %f", i, progreso_int, progreso );
+            progreso = i;
+            show_loading_screen();
+        }
+    }
+
+    // 5. Reiniciar script
     script_reset();
 }
 
@@ -297,7 +365,7 @@ void load_scene_from_json(Scene *scene, const char *filename)
     {
         int count = cJSON_GetArraySize(sprites);
         scene->sprite_count = 0;
-
+        printf("sprites\n");
         for (int i = 0; i < count; i++)
         {
             cJSON *spr = cJSON_GetArrayItem(sprites, i);
@@ -352,6 +420,15 @@ void load_scene_from_json(Scene *scene, const char *filename)
             // --- Agregar sprite a la escena ---
             scene_add_sprite(name, scene, tex, x, y, w, h, tex_w, tex_h,
                              alpha, alpha_speed, fading_out, fading_in, file, fondo, scale);
+
+            if (draw_loading_screen)
+            {
+                float progreso_int = 440.0f * 0.3f;
+                float equivalencia = progreso_int / count;
+
+                progreso += equivalencia;
+                show_loading_screen();
+            }
         }
     }
 
@@ -399,9 +476,19 @@ void load_scene_from_json(Scene *scene, const char *filename)
 
 void load_scene_with_textures(Scene *scene, const char *json_file)
 {
+    printf("load_scene_with_textures\n");
     // Primero liberar texturas viejas
+    float progreso_int = 440.0f * 0.3f;
+    float equivalencia = progreso_int / scene->sprite_count;
     for (int i = 0; i < scene->sprite_count; i++)
+    {
         sprite_free_texture(&scene->sprites[i]);
+        if (draw_loading_screen)
+        {
+            progreso += equivalencia;
+            show_loading_screen();
+        }
+    }
 
     load_scene_from_json(scene, json_file);
 }
@@ -470,7 +557,8 @@ void scene_render(Scene *scene)
         // debug_draw_script(20.0f, 30.0f);
         draw_string(20, 340, buf, len, &len, 1.0f);
     }
-    if(showName){
+    if (showName)
+    {
         draw_string(20, 280, scene->character_name, 32, NULL, 1.0f);
     }
     if (showButton)
@@ -542,6 +630,7 @@ void fade_update(int delta_ms)
     printf("Activando el fade\n");
     g_fade.elapsed_ms += delta_ms;
     float t = (float)g_fade.elapsed_ms / (float)g_fade.duration_ms;
+    printf("t = %f \n", t);
     if (t > 1.0f)
         t = 1.0f;
 

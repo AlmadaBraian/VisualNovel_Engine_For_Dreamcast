@@ -1,94 +1,86 @@
 {
-	"scene": "intro",
+  "scene": "intro",
   "script": [
-  {
-  "time": 1000,
-  "action": "play_music",
-  "music": "/cd/music/musica_3.wav",
-  "loop": 1,
-  "wait_input": false
-},
-{
-  "action": "show_sprite",
-  "sprite": "Marisa",
-  "x": 250,
-  "y": 10,
-  "wait_input": false
-},
-
-{"time": 2000,
-  "action": "animate",
-  "sprite": "Marisa",
-  "anim":  "fade_in",
-  "wait_input": false,
-  "x": 250,
-  "y": 10
-},
-{
-  "time": 1000,
-  "action": "show_text",
-  "wait_input": true,
-  "text": [
-  "Era una tarde fria en la ciudad.\nMarisa estaba hablando boludeces \ncomo toda mujer boluda \nque habla boludeces",
-	"Ella se estaba preparando \npara irse al parque.",
-    "De repente, escucho un ruido extraño\ndetras de ella."
-  ]
-},
-
-{"time": 3000,
-  "action": "animate",
-  "sprite": "Marisa",
-  "anim":  "fade_out",
-  "wait_input": false
-},
-{"time": 2000,
-  "action": "animate",
-  "sprite": "Martin",
-  "anim":  "entrar_izquierda",
-  "x": -100,
-  "y": 10,
-  "wait_input": false
-},
-{
-  "action": "show_text",
-  "wait_input": true,
-  "text": [
-    "¡No! Martín la intercepta\ncon intenciones inceminatorias."
-  ]
-},
-
-{"time": 3000,
-  "action": "animate",
-  "sprite": "Martin",
-  "anim":  "fade_out",
-  "wait_input": false
-},
-
-{"time": 0,
-  "action": "show_text",
-  "wait_input": false,
-  "text": [
-    "Dale, si te gusta...\nveni para acá.\nDejese querer."
-  ]
-},
-  {
-	"time": 3000,
-  "action": "stop_music",
-  "wait_input": false
-},
-{
-	"time": 1000,
-  "action": "play_music",
-  "music": "/cd/music/musica_1.wav",
-  "loop": 1,
-  "wait_input": false
-},
-{
-  "action": "next_scene",
-  "scene_new": "/rd/escena2.json",
-  "wait_input": false
-}
-
+    {
+      "time": 1000,
+      "action": "play_music",
+      "music": "/cd/music/musica_3.wav",
+      "loop": 1,
+      "wait_input": false
+    },
+    {
+      "action": "show_sprite",
+      "sprite": "Marisa",
+      "x": 250,
+      "y": 10,
+      "wait_input": false
+    },
+    {
+      "time": 2000,
+      "action": "animate",
+      "sprite": "Marisa",
+      "anim": "fade_in",
+      "wait_input": false,
+      "x": 250,
+      "y": 10
+    },
+    {
+      "time": 1000,
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "Era una tarde fria en la ciudad.\nMarisa estaba hablando boludeces \ncomo toda mujer boluda \nque habla boludeces",
+        "Ella se estaba preparando \npara irse al parque.",
+        "De repente, escucho un ruido extraño\ndetras de ella."
+      ]
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "Marisa",
+      "anim": "fade_out",
+      "wait_input": false
+    },
+    {
+      "time": 2000,
+      "action": "animate",
+      "sprite": "Martin",
+      "anim": "entrar_izquierda",
+      "x": -100,
+      "y": 10,
+      "wait_input": false
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "¡No! Martín la intercepta\ncon intenciones inceminatorias."
+      ]
+    },
+    {
+      "time": 3000,
+      "action": "animate",
+      "sprite": "Martin",
+      "anim": "fade_out",
+      "wait_input": false
+    },
+    {
+      "action": "show_text",
+      "wait_input": true,
+      "text": [
+        "Dale, si te gusta...\nveni para acá.\nDejese querer."
+      ]
+    },
+    {
+      "time": 500,
+      "action": "stop_music",
+      "wait_input": false
+    },
+    {
+      "action": "next_scene",
+      "scene_new": "/rd/escena2.json",
+      "wait_input": false
+    }
   ],
   "background": "/cd/png/casa.png",
   "sprites": [
@@ -98,22 +90,22 @@
       "y": 10,
       "width": 480,
       "height": 480,
-	  "name": "Marisa",
-	  "alpha": 0
+      "name": "Marisa",
+      "alpha": 0,
+      "scale": 1
     },
-	{
+    {
       "texture": "/cd/png/Martin.png",
       "x": -480,
       "y": 10,
       "width": 480,
       "height": 480,
-	  "name": "Martin",
-	  "alpha": 1
-	  
+      "name": "Martin",
+      "alpha": 1,
+      "scale": 1
     }
   ],
   "lines": [
     ""
   ]
 }
-
